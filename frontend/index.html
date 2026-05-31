@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCA9685 Debug Panel</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+    <!-- ═══ Status Bar ═══ -->
+    <header class="status-bar" id="statusBar">
+        <div class="status-left">
+            <span class="status-indicator" id="statusIndicator"></span>
+            <span class="status-text" id="statusText">Connecting…</span>
+            <span class="status-divider">|</span>
+            <span class="status-label">I²C:</span>
+            <span class="status-value" id="statusI2c">0x40</span>
+            <span class="status-divider">|</span>
+            <span class="status-label">Freq:</span>
+            <span class="status-value" id="statusFreq">50 Hz</span>
+            <span class="status-divider">|</span>
+            <span class="status-label">Heartbeat:</span>
+            <span class="status-value" id="statusHeartbeat">—</span>
+        </div>
+        <div class="status-right">
+            <button class="btn btn-enable disabled" id="btnGlobalEnable" title="Toggle all channel outputs on/off">
+                DISABLED
+            </button>
+            <button class="btn btn-outline" id="btnExport" title="Save workspace to computer">⬇ Export</button>
+            <button class="btn btn-outline" id="btnImport" title="Load workspace from computer">⬆ Import</button>
+            <input type="file" id="importFileInput" accept=".json" hidden>
+            <button class="btn btn-outline" id="btnSettings">⚙ Settings</button>
+        </div>
+    </header>
+
+    <!-- ═══ Channel Grid ═══ -->
+    <main class="channel-grid" id="channelGrid">
+        <!-- 16 channel cards rendered by JS -->
+    </main>
+
+    <!-- ═══ Settings Modal ═══ -->
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Advanced Settings</h2>
+                <button class="btn-close" id="btnCloseSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Frequency -->
+                <div class="setting-group">
+                    <label for="settingFreq">PWM Frequency</label>
+                    <div class="setting-row">
+                        <input type="range" id="settingFreq" min="40" max="400" step="1" value="50">
+                        <input type="number" id="settingFreqNum" min="40" max="400" step="1" value="50">
+                        <span class="unit">Hz</span>
+                    </div>
+                    <p class="help-text">Default 50 Hz. Range: 40–400 Hz.</p>
+                </div>
+
+                <!-- Pulse Range -->
+                <div class="setting-group">
+                    <label>Default Pulse Width Range</label>
+                    <div class="setting-row">
+                        <span class="unit">Min</span>
+                        <input type="number" id="settingPulseMin" min="100" max="10000" step="10" value="600">
+                        <span class="unit">µs</span>
+                        <span class="unit">Max</span>
+                        <input type="number" id="settingPulseMax" min="100" max="10000" step="10" value="2400">
+                        <span class="unit">µs</span>
+                    </div>
+                    <p class="help-text">Used for uncalibrated channels.</p>
+                </div>
+
+                <button class="btn btn-primary" id="btnApplySettings">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Calibration Modal ═══ -->
+    <div class="modal-overlay hidden" id="calibrateModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Calibrate Channel <span id="calibChannelNum">0</span></h2>
+                <button class="btn-close" id="btnCloseCalibrate">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Angle Range</label>
+                    <div class="setting-row">
+                        <span class="unit">Min</span>
+                        <input type="number" id="calibMinAngle" step="1" value="0">
+                        <span class="unit">°</span>
+                        <span class="unit">Max</span>
+                        <input type="number" id="calibMaxAngle" step="1" value="180">
+                        <span class="unit">°</span>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>Pulse Width Range</label>
+                    <div class="setting-row">
+                        <span class="unit">Min</span>
+                        <input type="number" id="calibMinPulse" min="100" max="10000" step="10" value="600">
+                        <span class="unit">µs</span>
+                        <span class="unit">Max</span>
+                        <input type="number" id="calibMaxPulse" min="100" max="10000" step="10" value="2400">
+                        <span class="unit">µs</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="btnApplyCalibrate">Save Calibration</button>
+                <button class="btn btn-danger" id="btnClearCalibrate">Clear Calibration</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

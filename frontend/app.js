@@ -1,0 +1,763 @@
+/**
+ * PCA9685 Debug Panel — Frontend Application
+ *
+ * Manages SSE connection, REST API calls, channel state, and UI rendering.
+ */
+
+// ═══════════════════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════════════════
+
+const state = {
+    status: 'offline',      // 'online' | 'offline' | 'error'
+    i2cAddress: 0x40,
+    frequencyHz: 50,
+    minPulseUs: 600,
+    maxPulseUs: 2400,
+    outputEnabled: false,   // global output enable
+    lastHeartbeat: null,    // ISO string or null
+    channels: [],           // Array of 16 channel objects (filled by fetchChannels)
+};
+
+// Default channel template
+function defaultChannel(i) {
+    return {
+        channel: i,
+        name: `Channel ${i}`,
+        enabled: true,
+        angle: null,
+        duty: null,
+        minAngle: null,
+        maxAngle: null,
+        minPulse: null,
+        maxPulse: null,
+        calibrated: false,
+        mode: 'angle',      // 'angle' or 'duty'
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// API Helpers
+// ═══════════════════════════════════════════════════════════════════
+
+async function api(path, options = {}) {
+    const res = await fetch(path, {
+        headers: { 'Content-Type': 'application/json', ...options.headers },
+        ...options,
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `HTTP ${res.status}`);
+    }
+    return res.json();
+}
+
+async function fetchStatus() {
+    const data = await api('/api/status');
+    state.status = data.status;
+    state.i2cAddress = data.i2c_address;
+    state.frequencyHz = data.frequency_hz;
+    state.minPulseUs = data.min_pulse_us;
+    state.maxPulseUs = data.max_pulse_us;
+    state.outputEnabled = data.output_enabled;
+    state.lastHeartbeat = data.last_heartbeat;
+    renderStatusBar();
+    renderGlobalEnableBtn();
+}
+
+async function fetchChannels() {
+    const data = await api('/api/servo/channels');
+    state.channels = data.channels.map(ch => ({
+        ...defaultChannel(ch.channel),
+        ...ch,
+        mode: ch.calibrated ? 'angle' : 'duty',
+    }));
+    renderAllChannels();
+}
+
+async function setServo(channel, angle, duty) {
+    const body = angle !== null ? { channel, angle } : { channel, duty };
+    await api('/api/servo/set', {
+        method: 'POST',
+        body: JSON.stringify(body),
+    });
+}
+
+async function setChannelName(channel, name) {
+    await api('/api/servo/name', {
+        method: 'POST',
+        body: JSON.stringify({ channel, name }),
+    });
+}
+
+async function calibrateChannel(channel, calib) {
+    await api('/api/servo/calibrate', {
+        method: 'POST',
+        body: JSON.stringify({ channel, ...calib }),
+    });
+}
+
+async function setFrequency(hz) {
+    await api('/api/pca9685/frequency', {
+        method: 'POST',
+        body: JSON.stringify({ frequency_hz: hz }),
+    });
+}
+
+async function setPulseRange(minUs, maxUs) {
+    await api('/api/pca9685/pulse_range', {
+        method: 'POST',
+        body: JSON.stringify({ min_pulse_us: minUs, max_pulse_us: maxUs }),
+    });
+}
+
+async function exportWorkspace() {
+    return api('/api/workspace/export');
+}
+
+async function setOutputGlobal(enabled) {
+    return api('/api/output/global', {
+        method: 'POST',
+        body: JSON.stringify({ enabled }),
+    });
+}
+
+async function setOutputChannel(channel, enabled) {
+    return api('/api/output/channel', {
+        method: 'POST',
+        body: JSON.stringify({ channel, enabled }),
+    });
+}
+
+async function importWorkspace(data) {
+    return api('/api/workspace/import', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SSE Connection
+// ═══════════════════════════════════════════════════════════════════
+
+let sseSource = null;
+let sseReconnectTimer = null;
+
+function connectSSE() {
+    if (sseSource) { sseSource.close(); }
+    if (sseReconnectTimer) { clearTimeout(sseReconnectTimer); }
+
+    sseSource = new EventSource('/api/events');
+
+    sseSource.addEventListener('status', (e) => {
+        try {
+            const data = JSON.parse(e.data);
+            if (data.status) state.status = data.status;
+            if (data.last_heartbeat !== undefined) state.lastHeartbeat = data.last_heartbeat;
+            renderStatusBar();
+            toast(`Device ${data.status}`, data.status === 'online' ? '' : 'error');
+        } catch (_) { /* ignore parse errors */ }
+    });
+
+    sseSource.onerror = () => {
+        sseSource.close();
+        sseSource = null;
+        state.status = 'offline';
+        renderStatusBar();
+        // Reconnect after 3 seconds
+        sseReconnectTimer = setTimeout(connectSSE, 3000);
+    };
+
+    sseSource.onopen = () => {
+        // Re-fetch full state on reconnect
+        fetchStatus().catch(() => {});
+        fetchChannels().catch(() => {});
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Toast
+// ═══════════════════════════════════════════════════════════════════
+
+function toast(msg, className = '') {
+    const el = document.createElement('div');
+    el.className = `toast ${className}`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Click-to-edit helper
+// ═══════════════════════════════════════════════════════════════════
+
+function makeEditable(displayEl, onCommit) {
+    displayEl.style.cursor = 'text';
+    displayEl.title = 'Click to edit';
+
+    displayEl.addEventListener('click', () => {
+        // Extract numeric value from display text
+        const match = displayEl.textContent.match(/[\d.]+/);
+        const numVal = match ? parseFloat(match[0]) : 0;
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = numVal;
+        input.step = 'any';
+        Object.assign(input.style, {
+            width: '70px',
+            padding: '2px 4px',
+            textAlign: 'right',
+            fontSize: '13px',
+            fontVariantNumeric: 'tabular-nums',
+            border: '1px solid var(--accent)',
+            borderRadius: '4px',
+            background: 'var(--bg-input)',
+            color: 'var(--text)',
+            outline: 'none',
+        });
+
+        displayEl.replaceWith(input);
+        input.focus();
+        input.select();
+
+        function done() {
+            const val = parseFloat(input.value);
+            input.replaceWith(displayEl);
+            if (!isNaN(val)) onCommit(val);
+        }
+
+        input.addEventListener('blur', done);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') done();
+            if (e.key === 'Escape') {
+                input.replaceWith(displayEl);
+            }
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Render: Status Bar
+// ═══════════════════════════════════════════════════════════════════
+
+function renderStatusBar() {
+    const indicator = document.getElementById('statusIndicator');
+    const text = document.getElementById('statusText');
+    const i2c = document.getElementById('statusI2c');
+    const freq = document.getElementById('statusFreq');
+    const hb = document.getElementById('statusHeartbeat');
+
+    indicator.className = 'status-indicator ' + state.status;
+    text.textContent = state.status.charAt(0).toUpperCase() + state.status.slice(1);
+    i2c.textContent = '0x' + state.i2cAddress.toString(16).toUpperCase();
+    freq.textContent = state.frequencyHz + ' Hz';
+
+    if (state.lastHeartbeat) {
+        const d = new Date(state.lastHeartbeat);
+        hb.textContent = d.toLocaleTimeString();
+    } else {
+        hb.textContent = '—';
+    }
+}
+
+function renderGlobalEnableBtn() {
+    const btn = document.getElementById('btnGlobalEnable');
+    if (!btn) return;
+    if (state.outputEnabled) {
+        btn.textContent = 'ENABLED';
+        btn.className = 'btn btn-enable enabled';
+    } else {
+        btn.textContent = 'DISABLED';
+        btn.className = 'btn btn-enable disabled';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Render: Channel Cards
+// ═══════════════════════════════════════════════════════════════════
+
+function renderAllChannels() {
+    const grid = document.getElementById('channelGrid');
+    grid.innerHTML = '';
+
+    for (const ch of state.channels) {
+        grid.appendChild(createChannelCard(ch));
+    }
+}
+
+function createChannelCard(ch) {
+    const card = document.createElement('div');
+    card.className = 'channel-card'
+        + (ch.calibrated ? ' calibrated' : '')
+        + (ch.enabled ? '' : ' disabled');
+    card.dataset.channel = ch.channel;
+
+    // ── Header ──
+    const header = document.createElement('div');
+    header.className = 'card-header';
+
+    const label = document.createElement('span');
+    label.className = 'channel-label';
+    label.textContent = `CH ${ch.channel}`;
+
+    const nameInput = document.createElement('input');
+    nameInput.className = 'channel-name';
+    nameInput.value = ch.name;
+    nameInput.maxLength = 20;
+    nameInput.addEventListener('blur', () => onNameChange(ch.channel, nameInput.value));
+    nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') nameInput.blur();
+    });
+
+    const calibBtn = document.createElement('button');
+    calibBtn.className = 'btn-calibrate' + (ch.calibrated ? ' active' : '');
+    calibBtn.textContent = '⚙';
+    calibBtn.title = ch.calibrated ? 'Edit calibration' : 'Calibrate';
+    calibBtn.addEventListener('click', () => openCalibrateModal(ch.channel));
+
+    header.appendChild(label);
+    header.appendChild(nameInput);
+    header.appendChild(calibBtn);
+
+    // ── Control ──
+    const control = document.createElement('div');
+    control.className = 'card-control';
+
+    const sliderRow = document.createElement('div');
+    sliderRow.className = 'slider-row';
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+
+    const valueDisplay = document.createElement('span');
+    valueDisplay.className = 'value-display';
+
+    // Configure slider based on mode
+    function configSlider() {
+        if (ch.mode === 'angle' && ch.calibrated) {
+            slider.min = ch.minAngle;
+            slider.max = ch.maxAngle;
+            slider.step = (ch.maxAngle - ch.minAngle) / 200;
+            slider.value = ch.angle !== null ? ch.angle : (ch.minAngle + ch.maxAngle) / 2;
+            valueDisplay.textContent = Number(slider.value).toFixed(1) + '°';
+        } else {
+            slider.min = state.minPulseUs;
+            slider.max = state.maxPulseUs;
+            slider.step = 1;
+            const periodUs = 1_000_000 / state.frequencyHz;
+            slider.value = ch.duty !== null ? Math.round(ch.duty * periodUs) : state.minPulseUs;
+            valueDisplay.textContent = Math.round(Number(slider.value)) + ' µs';
+        }
+    }
+    configSlider();
+
+    slider.addEventListener('input', () => {
+        if (ch.mode === 'angle' && ch.calibrated) {
+            valueDisplay.textContent = Number(slider.value).toFixed(1) + '°';
+        } else {
+            valueDisplay.textContent = Math.round(Number(slider.value)) + ' µs';
+        }
+    });
+
+    slider.addEventListener('change', () => {
+        onSliderChange(ch, Number(slider.value));
+    });
+
+    sliderRow.appendChild(slider);
+    sliderRow.appendChild(valueDisplay);
+
+    // ── Mode toggle ──
+    const toggleRow = document.createElement('div');
+    toggleRow.style.display = 'flex';
+    toggleRow.style.justifyContent = 'space-between';
+    toggleRow.style.alignItems = 'center';
+    toggleRow.style.gap = '6px';
+
+    // Per-channel enable toggle
+    const enableBtn = document.createElement('button');
+    enableBtn.className = 'channel-enable-toggle ' + (ch.enabled ? 'on' : 'off');
+    enableBtn.textContent = ch.enabled ? 'ON' : 'OFF';
+    enableBtn.title = ch.enabled ? 'Disable this channel' : 'Enable this channel';
+    enableBtn.addEventListener('click', () => onChannelEnableToggle(ch, enableBtn, slider));
+
+    const modeBtn = document.createElement('button');
+    modeBtn.className = 'mode-toggle';
+    modeBtn.textContent = ch.mode === 'angle' ? 'Angle' : 'Duty';
+    modeBtn.addEventListener('click', () => {
+        ch.mode = (ch.mode === 'angle') ? 'duty' : 'angle';
+        modeBtn.textContent = ch.mode === 'angle' ? 'Angle' : 'Duty';
+        configSlider();
+    });
+
+    // --- Pulse info (always shows µs) ---
+    function updatePulseInfo() {
+        const val = Number(slider.value);
+        if (ch.mode === 'angle' && ch.calibrated) {
+            const ratio = (val - ch.minAngle) / (ch.maxAngle - ch.minAngle);
+            const pulse = ch.minPulse + ratio * (ch.maxPulse - ch.minPulse);
+            pulseInfo.textContent = pulse.toFixed(0) + ' µs';
+        } else {
+            pulseInfo.textContent = Math.round(val) + ' µs';
+        }
+    }
+    const pulseInfo = document.createElement('span');
+    pulseInfo.className = 'pulse-display';
+    updatePulseInfo();
+
+    slider.addEventListener('input', updatePulseInfo);
+
+    toggleRow.appendChild(enableBtn);
+    toggleRow.appendChild(modeBtn);
+    toggleRow.appendChild(pulseInfo);
+
+    control.appendChild(sliderRow);
+    control.appendChild(toggleRow);
+
+    card.appendChild(header);
+    // Disable slider when channel is off
+    slider.disabled = !ch.enabled;
+
+    // Click-to-edit on value display
+    makeEditable(valueDisplay, (newVal) => {
+        if (ch.mode === 'angle' && ch.calibrated) {
+            newVal = Math.max(slider.min, Math.min(slider.max, newVal));
+            slider.value = newVal;
+        } else {
+            newVal = Math.max(slider.min, Math.min(slider.max, newVal));
+            slider.value = Math.round(newVal);
+        }
+        slider.dispatchEvent(new Event('input'));
+        slider.dispatchEvent(new Event('change'));
+    });
+
+    // Click-to-edit on pulse display
+    makeEditable(pulseInfo, (newVal) => {
+        if (ch.mode === 'angle' && ch.calibrated) {
+            // Convert pulse µs → angle
+            const ratio = (newVal - ch.minPulse) / (ch.maxPulse - ch.minPulse);
+            let angle = ch.minAngle + ratio * (ch.maxAngle - ch.minAngle);
+            angle = Math.max(slider.min, Math.min(slider.max, angle));
+            slider.value = angle;
+        } else {
+            newVal = Math.max(slider.min, Math.min(slider.max, newVal));
+            slider.value = Math.round(newVal);
+        }
+        slider.dispatchEvent(new Event('input'));
+        slider.dispatchEvent(new Event('change'));
+    });
+
+    card.appendChild(control);
+
+    // Store refs for later updates
+    card._slider = slider;
+    card._valueDisplay = valueDisplay;
+    card._modeBtn = modeBtn;
+    card._pulseInfo = pulseInfo;
+    card._nameInput = nameInput;
+    card._calibBtn = calibBtn;
+    card._enableBtn = enableBtn;
+
+    return card;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Handlers
+// ═══════════════════════════════════════════════════════════════════
+
+async function onSliderChange(ch, value) {
+    try {
+        if (ch.mode === 'angle' && ch.calibrated) {
+            await setServo(ch.channel, value, null);
+            ch.angle = value;
+            ch.duty = null;
+        } else {
+            // Slider is in µs; convert to duty (0–1)
+            const periodUs = 1_000_000 / state.frequencyHz;
+            const duty = Math.round(value) / periodUs;
+            await setServo(ch.channel, null, duty);
+            ch.duty = duty;
+            ch.angle = null;
+        }
+    } catch (err) {
+        toast(err.message, 'error');
+        // Revert slider
+        const card = document.querySelector(`.channel-card[data-channel="${ch.channel}"]`);
+        if (card && card._slider) {
+            if (ch.mode === 'angle' && ch.calibrated) {
+                card._slider.value = ch.angle !== null ? ch.angle : 0;
+            } else {
+                const periodUs = 1_000_000 / state.frequencyHz;
+                card._slider.value = ch.duty !== null ? Math.round(ch.duty * periodUs) : state.minPulseUs;
+            }
+        }
+        renderAllChannels(); // full refresh on error
+    }
+}
+
+async function onNameChange(channel, newName) {
+    const trimmed = newName.trim();
+    if (!trimmed) {
+        // Revert to previous name
+        const ch = state.channels[channel];
+        const card = document.querySelector(`.channel-card[data-channel="${channel}"]`);
+        if (card && card._nameInput) card._nameInput.value = ch.name;
+        return;
+    }
+    try {
+        await setChannelName(channel, trimmed);
+        state.channels[channel].name = trimmed;
+    } catch (err) {
+        toast(err.message, 'error');
+        const ch = state.channels[channel];
+        const card = document.querySelector(`.channel-card[data-channel="${channel}"]`);
+        if (card && card._nameInput) card._nameInput.value = ch.name;
+    }
+}
+
+async function onChannelEnableToggle(ch, enableBtn, slider) {
+    const newEnabled = !ch.enabled;
+    try {
+        await setOutputChannel(ch.channel, newEnabled);
+        ch.enabled = newEnabled;
+        enableBtn.className = 'channel-enable-toggle ' + (ch.enabled ? 'on' : 'off');
+        enableBtn.textContent = ch.enabled ? 'ON' : 'OFF';
+        enableBtn.title = ch.enabled ? 'Disable this channel' : 'Enable this channel';
+        slider.disabled = !ch.enabled;
+        const card = document.querySelector(`.channel-card[data-channel="${ch.channel}"]`);
+        if (card) {
+            card.classList.toggle('disabled', !ch.enabled);
+        }
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Settings Modal
+// ═══════════════════════════════════════════════════════════════════
+
+let settingsOpen = false;
+
+function openSettingsModal() {
+    settingsOpen = true;
+    document.getElementById('settingFreq').value = state.frequencyHz;
+    document.getElementById('settingFreqNum').value = state.frequencyHz;
+    document.getElementById('settingPulseMin').value = state.minPulseUs;
+    document.getElementById('settingPulseMax').value = state.maxPulseUs;
+    document.getElementById('settingsModal').classList.remove('hidden');
+}
+
+function closeSettingsModal() {
+    settingsOpen = false;
+    document.getElementById('settingsModal').classList.add('hidden');
+}
+
+async function applySettings() {
+    const hz = Number(document.getElementById('settingFreq').value);
+    const minUs = Number(document.getElementById('settingPulseMin').value);
+    const maxUs = Number(document.getElementById('settingPulseMax').value);
+
+    try {
+        if (hz !== state.frequencyHz) {
+            await setFrequency(hz);
+            state.frequencyHz = hz;
+        }
+        if (minUs !== state.minPulseUs || maxUs !== state.maxPulseUs) {
+            await setPulseRange(minUs, maxUs);
+            state.minPulseUs = minUs;
+            state.maxPulseUs = maxUs;
+        }
+        renderStatusBar();
+        closeSettingsModal();
+        toast('Settings applied');
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// Frequency slider ↔ number sync
+document.addEventListener('DOMContentLoaded', () => {
+    const freqSlider = document.getElementById('settingFreq');
+    const freqNum = document.getElementById('settingFreqNum');
+    freqSlider.addEventListener('input', () => { freqNum.value = freqSlider.value; });
+    freqNum.addEventListener('input', () => { freqSlider.value = freqNum.value; });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Calibrate Modal
+// ═══════════════════════════════════════════════════════════════════
+
+let calibChannel = 0;
+
+function openCalibrateModal(channel) {
+    calibChannel = channel;
+    const ch = state.channels[channel];
+    document.getElementById('calibChannelNum').textContent = channel;
+
+    document.getElementById('calibMinAngle').value = ch.calibrated ? ch.minAngle : 0;
+    document.getElementById('calibMaxAngle').value = ch.calibrated ? ch.maxAngle : 180;
+    document.getElementById('calibMinPulse').value = ch.calibrated ? ch.minPulse : state.minPulseUs;
+    document.getElementById('calibMaxPulse').value = ch.calibrated ? ch.maxPulse : state.maxPulseUs;
+
+    document.getElementById('calibrateModal').classList.remove('hidden');
+}
+
+function closeCalibrateModal() {
+    document.getElementById('calibrateModal').classList.add('hidden');
+    calibChannel = 0;
+}
+
+async function applyCalibrate() {
+    const minAngle = Number(document.getElementById('calibMinAngle').value);
+    const maxAngle = Number(document.getElementById('calibMaxAngle').value);
+    const minPulse = Number(document.getElementById('calibMinPulse').value);
+    const maxPulse = Number(document.getElementById('calibMaxPulse').value);
+
+    if (minAngle >= maxAngle) { toast('min_angle must be < max_angle', 'error'); return; }
+    if (minPulse >= maxPulse) { toast('min_pulse must be < max_pulse', 'error'); return; }
+
+    try {
+        await calibrateChannel(calibChannel, {
+            min_angle: minAngle, max_angle: maxAngle,
+            min_pulse: minPulse, max_pulse: maxPulse,
+        });
+
+        const ch = state.channels[calibChannel];
+        ch.calibrated = true;
+        ch.minAngle = minAngle;
+        ch.maxAngle = maxAngle;
+        ch.minPulse = minPulse;
+        ch.maxPulse = maxPulse;
+        ch.mode = 'angle';
+        ch.angle = (minAngle + maxAngle) / 2;
+
+        closeCalibrateModal();
+        renderAllChannels();
+        // Set initial angle
+        await setServo(calibChannel, ch.angle, null);
+        toast(`Channel ${calibChannel} calibrated`);
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function clearCalibrate() {
+    try {
+        // Send an empty calibration — we just unset via name change or re-fetch
+        // Actually there's no "uncalibrate" endpoint, so we just clear locally
+        // and tell the user to use duty mode.
+        // For now, we set the calibration to a zeroed state which effectively
+        // means no calibration.  But the API doesn't support clearing.
+        // WORKAROUND: set min_angle=max_angle, which makes it invalid.
+        // Better: just treat the "Clear" as switching to duty mode.
+        toast(`Use duty mode for channel ${calibChannel} instead`);
+        state.channels[calibChannel].calibrated = false;
+        state.channels[calibChannel].mode = 'duty';
+        closeCalibrateModal();
+        renderAllChannels();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Workspace Import / Export
+// ═══════════════════════════════════════════════════════════════════
+
+async function handleExport() {
+    try {
+        const data = await exportWorkspace();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `pca9685-workspace-${timestamp}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Workspace exported');
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function handleImport(file) {
+    try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        await importWorkspace(data);
+        // Re-fetch everything
+        await fetchStatus();
+        await fetchChannels();
+        toast('Workspace imported & applied');
+    } catch (err) {
+        toast('Import failed: ' + err.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ── Button bindings ──
+    document.getElementById('btnGlobalEnable').addEventListener('click', async () => {
+        const btn = document.getElementById('btnGlobalEnable');
+        btn.disabled = true;
+        try {
+            const newState = !state.outputEnabled;
+            await setOutputGlobal(newState);
+            state.outputEnabled = newState;
+            renderGlobalEnableBtn();
+            // Re-fetch channels to sync enable states
+            await fetchChannels();
+            toast(state.outputEnabled ? 'Output enabled' : 'Output disabled');
+        } catch (err) {
+            toast(err.message, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+    document.getElementById('btnExport').addEventListener('click', handleExport);
+    document.getElementById('btnImport').addEventListener('click', () => {
+        document.getElementById('importFileInput').click();
+    });
+    document.getElementById('importFileInput').addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+            handleImport(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
+    document.getElementById('btnSettings').addEventListener('click', openSettingsModal);
+    document.getElementById('btnCloseSettings').addEventListener('click', closeSettingsModal);
+    document.getElementById('btnApplySettings').addEventListener('click', applySettings);
+
+    // Calibrate modal
+    document.getElementById('btnCloseCalibrate').addEventListener('click', closeCalibrateModal);
+    document.getElementById('btnApplyCalibrate').addEventListener('click', applyCalibrate);
+    document.getElementById('btnClearCalibrate').addEventListener('click', clearCalibrate);
+
+    // Close modals on overlay click
+    document.getElementById('settingsModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeSettingsModal();
+    });
+    document.getElementById('calibrateModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeCalibrateModal();
+    });
+
+    // Close modals on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeSettingsModal();
+            closeCalibrateModal();
+        }
+    });
+
+    // ── Initial data load ──
+    fetchStatus().catch(() => {});
+    fetchChannels().catch(() => {});
+
+    // ── SSE connection ──
+    connectSSE();
+});
