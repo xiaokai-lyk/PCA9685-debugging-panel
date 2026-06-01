@@ -277,7 +277,7 @@ wheels = [
 [[package]]
 name = "pca9685-debugging-panel"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "adafruit-blinka" },
     { name = "adafruit-circuitpython-servokit" },

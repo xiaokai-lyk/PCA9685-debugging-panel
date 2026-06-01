@@ -41,7 +41,11 @@ uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080
 
 ### 在桌面端运行（无硬件）
 
-驱动程序会自动检测 I²C 总线是否可用。若不可用则降级为 **mock 模式**——所有 API 正常工作，UI 可完整交互，前端开发无需真实硬件。
+使用 `--mock` 标志跳过硬件初始化——所有 API 正常工作，UI 可完整交互，前端开发无需真实硬件：
+
+```shell
+python main.py --mock
+```
 
 ## 开发
 
@@ -51,7 +55,7 @@ uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080
 PCA9685-debugging-panel/
 ├── backend/
 │   ├── app.py              # FastAPI 入口（REST + SSE）
-│   ├── pca9685.py          # PCA9685 驱动（真实硬件 + mock 降级）
+│   ├── pca9685.py          # PCA9685 驱动（真实硬件 + 可选 mock 模式）
 │   ├── config_store.py     # JSON 配置持久化
 │   └── schemas.py          # Pydantic 请求/响应模型
 ├── frontend/
@@ -67,8 +71,11 @@ PCA9685-debugging-panel/
 ### 开发模式运行
 
 ```shell
-# 带热重载启动
+# 硬件模式（需要真实 PCA9685）
 uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080 --reload
+
+# Mock 模式（无需硬件——用于 UI 开发）
+python main.py --mock
 ```
 
 ### API 一览
@@ -96,7 +103,7 @@ uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080 --reload
 - **频率控制** — 40–400 Hz 可调 PWM 频率
 - **Workspace 保存/加载** — 将完整配置（校准、名称、设置）导出为 JSON 文件，之后可导入或迁移到其他机器人
 - **重启持久化** — `config.json` 在重启后自动恢复上次配置
-- **Mock 模式** — 无真实硬件时 API 和 UI 完全可用，便于开发测试
+- **Mock 模式** — 通过 `--mock` 标志启动，无需硬件即可进行 UI 开发与测试
 - **暗色主题** — 响应式布局，适配桌面和移动端浏览器
 
 ## 配置
@@ -133,4 +140,4 @@ uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080 --reload
 
 ## 许可证
 
-本项目使用 MIT 许可证。
+本项目使用 [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) 许可证。

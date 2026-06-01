@@ -102,6 +102,7 @@ def _get_status(driver: PCA9685Driver) -> StatusResponse:
         max_pulse_us=store.max_pulse_us,
         output_enabled=store.output_enabled,
         last_heartbeat=_iso_now() if driver.last_heartbeat > 0 else None,
+        mock_mode=driver.mock_mode,
     )
 
 
@@ -172,6 +173,9 @@ def _restore_channel(driver: PCA9685Driver, channel: int) -> None:
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+if not FRONTEND_DIR.is_dir():
+    # Fallback: maybe frontend is alongside the backend package (alternative install layout)
+    FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 
 app = FastAPI(title="PCA9685 Debug Panel", lifespan=lifespan)
 

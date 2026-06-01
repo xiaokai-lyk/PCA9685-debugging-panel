@@ -16,6 +16,7 @@ const state = {
     maxPulseUs: 2400,
     outputEnabled: false,   // global output enable
     lastHeartbeat: null,    // ISO string or null
+    mockMode: false,        // true when running without real hardware
     channels: [],           // Array of 16 channel objects (filled by fetchChannels)
 };
 
@@ -61,6 +62,7 @@ async function fetchStatus() {
     state.maxPulseUs = data.max_pulse_us;
     state.outputEnabled = data.output_enabled;
     state.lastHeartbeat = data.last_heartbeat;
+    state.mockMode = data.mock_mode || false;
     renderStatusBar();
     renderGlobalEnableBtn();
 }
@@ -247,6 +249,7 @@ function renderStatusBar() {
     const i2c = document.getElementById('statusI2c');
     const freq = document.getElementById('statusFreq');
     const hb = document.getElementById('statusHeartbeat');
+    const mockBadge = document.getElementById('mockBadge');
 
     indicator.className = 'status-indicator ' + state.status;
     text.textContent = state.status.charAt(0).toUpperCase() + state.status.slice(1);
@@ -258,6 +261,11 @@ function renderStatusBar() {
         hb.textContent = d.toLocaleTimeString();
     } else {
         hb.textContent = '—';
+    }
+
+    // Show/hide mock mode badge
+    if (mockBadge) {
+        mockBadge.style.display = state.mockMode ? 'inline-block' : 'none';
     }
 }
 

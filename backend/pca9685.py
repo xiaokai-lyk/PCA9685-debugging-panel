@@ -1,6 +1,8 @@
 """PCA9685 driver wrapper with optional mock mode for development.
 
-Provides a uniform API regardless of whether real I²C hardware is present.
+Mock mode is controlled explicitly — use the ``--mock`` flag when launching
+(or set the module-level config via ``configure_mock()``) rather than
+auto-detecting whether hardware is present.
 """
 
 from __future__ import annotations
@@ -9,11 +11,21 @@ import time
 import threading
 from typing import Optional
 
+# Module-level config set by main.py before the driver is initialised.
+_mock_config: bool = False
+
+
+def configure_mock(enabled: bool) -> None:
+    """Enable or disable mock mode (called from launcher before startup)."""
+    global _mock_config
+    _mock_config = enabled
+
 
 class PCA9685Driver:
     """Thin wrapper around adafruit_pca9685.PCA9685.
 
-    - Auto-detects hardware; falls back to a mock when no I²C bus is found.
+    - Hardware access is attempted when *mock* is ``False``.
+    - When *mock* is ``True`` all operations run against an in-memory buffer.
     - Tracks heartbeat (last successful hardware read).
     - Handles angle↔pulse conversion using per-channel calibration.
     """
@@ -22,10 +34,10 @@ class PCA9685Driver:
     FREQ_MIN = 40
     FREQ_MAX = 400
 
-    def __init__(self, address: int = 0x40) -> None:
+    def __init__(self, address: int = 0x40, *, mock: bool = False) -> None:
         self._address = address
         self._device: Optional[object] = None
-        self._mock_mode = False
+        self._mock_mode = mock
         self._mock_channels: list[int] = [0] * 16  # duty_cycle values
         self._mock_frequency: float = 50.0
         self._lock = threading.Lock()
@@ -35,7 +47,13 @@ class PCA9685Driver:
     # ── lifecycle ──────────────────────────────────────────────────
 
     def initialize(self) -> None:
-        """Detect & initialise the PCA9685.  Falls back to mock mode."""
+        """Initialise the PCA9685 (or enter mock mode if configured)."""
+        if self._mock_mode:
+            print("[PCA9685] Mock mode enabled — no hardware required")
+            self._online = True
+            self._last_heartbeat = time.time()
+            return
+
         try:
             import board
             import busio
@@ -44,15 +62,12 @@ class PCA9685Driver:
             i2c = busio.I2C(board.SCL, board.SDA)
             self._device = adafruit_pca9685.PCA9685(i2c, address=self._address)
             self._device.frequency = 50
-            self._mock_mode = False
             self._online = True
             self._last_heartbeat = time.time()
         except Exception as exc:
-            print(f"[PCA9685] Hardware not found — using mock mode ({exc})")
+            print(f"[PCA9685] Hardware init failed: {exc}")
             self._device = None
-            self._mock_mode = True
-            self._online = True  # mock is always "online"
-            self._last_heartbeat = time.time()
+            self._online = False  # stay offline, heartbeat will retry
 
     def close(self) -> None:
         """Release resources."""
@@ -191,9 +206,13 @@ _driver: Optional[PCA9685Driver] = None
 
 
 def get_driver(address: int = 0x40) -> PCA9685Driver:
-    """Return (and cache) the singleton driver instance."""
+    """Return (and cache) the singleton driver instance.
+
+    Respects the module-level ``_mock_config`` flag set by
+    ``configure_mock()`` before server startup.
+    """
     global _driver
     if _driver is None:
-        _driver = PCA9685Driver(address=address)
+        _driver = PCA9685Driver(address=address, mock=_mock_config)
         _driver.initialize()
     return _driver

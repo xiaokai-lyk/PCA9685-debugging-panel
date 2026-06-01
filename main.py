@@ -1,9 +1,50 @@
 """PCA9685 Debug Panel — Launcher.
 
-Run with:
-    uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080 --reload
+Usage:
+    python main.py              # hardware mode (real PCA9685 required)
+    python main.py --mock       # mock mode for UI development (no hardware)
+
+After installing the package (pip install / uv add):
+    pca9685-panel               # hardware mode
+    pca9685-panel --mock        # mock mode
 """
 
-if __name__ == "__main__":
+import argparse
+
+from backend.pca9685 import configure_mock
+
+
+def main():
+    """Entry point for console_scripts and direct invocation."""
+    parser = argparse.ArgumentParser(description="PCA9685 Debug Panel")
+    parser.add_argument(
+        "--mock", action="store_true", default=False,
+        help="Run in mock mode (no hardware required — useful for UI development)",
+    )
+    parser.add_argument(
+        "--host", default="0.0.0.0",
+        help="Host to bind to (default: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--port", type=int, default=8080,
+        help="Port to listen on (default: 8080)",
+    )
+    parser.add_argument(
+        "--reload", action="store_true", default=False,
+        help="Enable uvicorn auto-reload (dev only)",
+    )
+    args = parser.parse_args()
+
+    configure_mock(enabled=args.mock)
+
     import uvicorn
-    uvicorn.run("backend.app:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run(
+        "backend.app:app",
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -42,7 +42,11 @@ On the first launch a `config.json` file is created automatically with default v
 
 ### Running on a desktop (no hardware)
 
-The driver auto-detects whether an I²C bus is available. If not, it falls back to **mock mode** — all APIs work, the UI is fully interactive, and no real hardware is required for frontend development.
+Use the `--mock` flag to skip hardware initialisation entirely — all APIs work, the UI is fully interactive, and no real hardware is required for frontend development:
+
+```shell
+python main.py --mock
+```
 
 ## Developing
 
@@ -52,7 +56,7 @@ The driver auto-detects whether an I²C bus is available. If not, it falls back 
 PCA9685-debugging-panel/
 ├── backend/
 │   ├── app.py              # FastAPI entry point (REST + SSE)
-│   ├── pca9685.py          # PCA9685 driver (real hardware + mock fallback)
+│   ├── pca9685.py          # PCA9685 driver (real hardware + optional mock mode)
 │   ├── config_store.py     # JSON configuration persistence
 │   └── schemas.py          # Pydantic request/response models
 ├── frontend/
@@ -68,8 +72,11 @@ PCA9685-debugging-panel/
 ### Running in development
 
 ```shell
-# Start with auto-reload
+# Hardware mode (real PCA9685 required)
 uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080 --reload
+
+# Mock mode (no hardware — for UI development)
+python main.py --mock
 ```
 
 ### API overview
@@ -97,7 +104,7 @@ Interactive docs available at `http://<host>:8080/docs` (Swagger UI).
 - **Frequency control** — adjustable 40–400 Hz PWM frequency
 - **Workspace save/load** — export the full configuration (calibration, names, settings) as a JSON file; import it later or on a different robot
 - **Restart persistence** — `config.json` survives reboots so your last setup is restored automatically
-- **Mock mode** — full UI and API work without real hardware for development & testing
+- **Mock mode** — run with `--mock` flag for UI development & testing without hardware
 - **Dark theme** — responsive layout, works on desktop and mobile browsers
 
 ## Configuration
@@ -134,4 +141,4 @@ For major changes, open an issue first to discuss what you would like to change.
 
 ## Licensing
 
-The code in this project is licensed under MIT license.
+The code in this project is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
