@@ -14,3 +14,6 @@ plan.md
 
 # Hardware-sepecific configurations
 config.json
+
+# Local-only uv configuration
+uv.toml
