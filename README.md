@@ -119,6 +119,33 @@ This file is written automatically when settings change — no manual editing ne
 
 Exported via the UI or `GET /api/workspace/export`. Contains the same fields plus full per-channel data (calibration, names, current positions). Can be imported on another machine to replicate a setup.
 
+## Troubleshooting
+
+### Device stays offline — "Hardware init failed: No module named 'RPi'" 
+
+This may happen when you are **NOT** using Raspberry Pi OS.
+
+The Adafruit Blinka library cannot find the GPIO driver for your Raspberry Pi.
+
+```shell
+# Recommended
+pip install rpi-lgpio
+
+# For older OS (not recommended, may involve the compilation of C extensions)
+pip install RPi.GPIO
+```
+
+### "No I2C device at address 0x40"
+
+Your PCA9685 might be at a different address. Scan the bus:
+
+```shell
+sudo apt-get install i2c-tools
+i2cdetect -y 1
+```
+
+Then update the address in `config.json` or via the Settings modal in the UI.
+
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature branch. Pull requests are welcome.

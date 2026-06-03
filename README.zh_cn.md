@@ -119,6 +119,34 @@ PCA9685-debugging-panel/
 
 通过 UI 或 `GET /api/workspace/export` 导出。包含上述字段以及完整的通道数据（校准、名称、当前位置）。可在另一台机器上导入以复现相同配置。
 
+## 常见问题
+
+### 设备一直离线 — "Hardware init failed: No module named 'RPi'"
+
+这种情况会在未使用 Raspberry Pi OS时出现。
+
+Adafruit Blinka 库找不到树莓派的 GPIO 驱动。
+
+```shell
+# 推荐
+pip install rpi-lgpio
+
+# 旧版 OS （不推荐，可能涉及到c扩展的编译）
+pip install RPi.GPIO
+```
+
+
+### "No I2C device at address 0x40"
+
+PCA9685 可能在别的地址上。扫描 I²C 总线：
+
+```shell
+sudo apt-get install i2c-tools
+i2cdetect -y 1
+```
+
+然后在 UI 的 Settings 弹窗中更新地址，或直接修改 `config.json`。
+
 ## 参与贡献
 
 欢迎 Fork 仓库并使用 feature 分支提交 Pull Request。
