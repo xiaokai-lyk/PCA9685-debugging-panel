@@ -2,6 +2,8 @@
 
 > Web-based remote control panel for debugging PCA9685 servo drivers on robots.
 
+> **⚠️ Security Notice:** This tool exposes a web server with **no authentication**. Only run it on a trusted local network (e.g., your robot's Wi‑Fi). Do **not** expose it to the public internet.
+
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)
 
@@ -135,7 +137,7 @@ pip install rpi-lgpio
 pip install RPi.GPIO
 ```
 
-### "No I2C device at address 0x40"
+### Offline — Heartbeat failed: [Errno 121] Remote I/O error
 
 Your PCA9685 might be at a different address. Scan the bus:
 
@@ -143,6 +145,7 @@ Your PCA9685 might be at a different address. Scan the bus:
 sudo apt-get install i2c-tools
 i2cdetect -y 1
 ```
+If it's all `--` in the result, please check if the device connection is correct. Make sure the connection is correct and then re-scan.
 
 Then update the address in `config.json` or via the Settings modal in the UI.
 

@@ -2,6 +2,8 @@
 
 > 基于 Web 的 PCA9685 舵机驱动远程调试面板，运行在机器人上，通过浏览器控制。
 
+> **⚠️ 安全提示：** 本工具会启动一个**无身份验证**的 Web 服务，请仅在可信的局域网（如机器人自带的 Wi‑Fi）中使用，**不要**暴露在公网上。
+
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)
 
@@ -135,8 +137,7 @@ pip install rpi-lgpio
 pip install RPi.GPIO
 ```
 
-
-### "No I2C device at address 0x40"
+### Heartbeat failed: [Errno 121] Remote I/O error
 
 PCA9685 可能在别的地址上。扫描 I²C 总线：
 
@@ -144,6 +145,8 @@ PCA9685 可能在别的地址上。扫描 I²C 总线：
 sudo apt-get install i2c-tools
 i2cdetect -y 1
 ```
+
+如果输出全都是 `--` 请检查设备连接是否正确，确保连接正确后重新扫描。
 
 然后在 UI 的 Settings 弹窗中更新地址，或直接修改 `config.json`。
 
