@@ -2,7 +2,7 @@
 
 > Web-based remote control panel for debugging PCA9685 servo drivers on robots.
 
-[![Python](https://img.shields.io/badge/python-%3E%3D3.13-blue)](https://python.org)
+[![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)
 
 [中文文档](README.zh_cn.md)
@@ -17,7 +17,7 @@ A lightweight web panel (similar to FTC Dashboard) that runs on your robot and l
 
 ### Prerequisites
 
-- Python (tested on 3.13, may work on other versions)
+- Python 3.10+
 - A Raspberry Pi (or similar) with I²C enabled and connected to PCA9685, **or** any machine for UI-only development (mock mode)
 
 ### Quick setup

@@ -2,7 +2,7 @@
 
 > 基于 Web 的 PCA9685 舵机驱动远程调试面板，运行在机器人上，通过浏览器控制。
 
-[![Python](https://img.shields.io/badge/python-%3E%3D3.13-blue)](https://python.org)
+[![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)
 
 [English](README.md)
@@ -17,7 +17,7 @@
 
 ### 环境要求
 
-- Python (在 3.13 版本上进行了测试，应该在其他版本中可能也能运行)
+- Python 3.10+
 - 已启用 I²C 并连接到PCA9685的树莓派（或同类设备），**或**任意电脑用于纯 UI 开发（mock 模式）
 
 ### 快速启动
