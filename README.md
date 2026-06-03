@@ -22,30 +22,34 @@ A lightweight web panel (similar to FTC Dashboard) that runs on your robot and l
 
 ### Quick setup
 
+#### Using Pip
 ```shell
-# Run these on your robot
-
-# Clone the repository
-git clone https://github.com/xiaokai-lyk/PCA9685-debugging-panel.git
-cd PCA9685-debugging-panel
-
-# Create virtual environment & install dependencies
-uv sync
+# Install from PyPI
+pip install pca9685-debugging-panel
 
 # Start the server
-uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080
+pca9685-panel --host 0.0.0.0 --port 8080
 ```
 
 Then open `http://<robot-ip>:8080` in your browser.
 
-On the first launch a `config.json` file is created automatically with default values (I²C address `0x40`, 50 Hz, 600–2400 µs pulse range).
+#### From source
+
+```shell
+git clone https://github.com/xiaokai-lyk/PCA9685-debugging-panel.git
+cd PCA9685-debugging-panel
+uv sync
+python main.py
+```
+
+On first launch a `config.json` file is created automatically with default values (I²C address `0x40`, 50 Hz, 600–2400 µs pulse range).
 
 ### Running on a desktop (no hardware)
 
 Use the `--mock` flag to skip hardware initialisation entirely — all APIs work, the UI is fully interactive, and no real hardware is required for frontend development:
 
 ```shell
-python main.py --mock
+pca9685-panel --mock
 ```
 
 ## Developing
@@ -67,16 +71,6 @@ PCA9685-debugging-panel/
 ├── main.py                 # Convenience launcher
 ├── plan.md                 # Architecture & design decisions
 └── pyproject.toml          # Project metadata & dependencies
-```
-
-### Running in development
-
-```shell
-# Hardware mode (real PCA9685 required)
-uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080 --reload
-
-# Mock mode (no hardware — for UI development)
-python main.py --mock
 ```
 
 ### API overview

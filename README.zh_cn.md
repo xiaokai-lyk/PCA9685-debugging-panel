@@ -22,20 +22,25 @@
 
 ### 快速启动
 
+#### 使用 Pip 安装
 ```shell
-# 以下操作在机器人上进行
-# 克隆仓库
-git clone https://github.com/xiaokai-lyk/PCA9685-debugging-panel.git
-cd PCA9685-debugging-panel
-
-# 创建虚拟环境并安装依赖
-uv sync
+# 从 PyPI 安装
+pip install pca9685-debugging-panel
 
 # 启动服务
-uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080
+pca9685-panel --host 0.0.0.0 --port 8080
 ```
 
 然后在浏览器打开 `http://<机器人IP>:8080`。
+
+#### 从源码安装
+
+```shell
+git clone https://github.com/xiaokai-lyk/PCA9685-debugging-panel.git
+cd PCA9685-debugging-panel
+uv sync
+python main.py
+```
 
 首次启动时会自动生成 `config.json`，包含默认值（I²C 地址 `0x40`，频率 50 Hz，脉宽范围 600–2400 µs）。
 
@@ -44,7 +49,7 @@ uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080
 使用 `--mock` 标志跳过硬件初始化——所有 API 正常工作，UI 可完整交互，前端开发无需真实硬件：
 
 ```shell
-python main.py --mock
+pca9685-panel --mock
 ```
 
 ## 开发
@@ -66,16 +71,6 @@ PCA9685-debugging-panel/
 ├── main.py                 # 便捷启动器
 ├── plan.md                 # 架构与设计决策
 └── pyproject.toml          # 项目元数据与依赖
-```
-
-### 开发模式运行
-
-```shell
-# 硬件模式（需要真实 PCA9685）
-uv run uvicorn backend.app:app --host 0.0.0.0 --port 8080 --reload
-
-# Mock 模式（无需硬件——用于 UI 开发）
-python main.py --mock
 ```
 
 ### API 一览
