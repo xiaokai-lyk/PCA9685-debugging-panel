@@ -137,7 +137,7 @@ pip install rpi-lgpio
 pip install RPi.GPIO
 ```
 
-### Offline — Heartbeat failed: [Errno 121] Remote I/O error
+### Offline — Hardware init faile2d: No I2C device at address: 0x40
 
 Your PCA9685 might be at a different address. Scan the bus:
 

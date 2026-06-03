@@ -137,7 +137,7 @@ pip install rpi-lgpio
 pip install RPi.GPIO
 ```
 
-### Heartbeat failed: [Errno 121] Remote I/O error
+### Heartbeat failed: Hardware init failed: No I2C device at address: 0x40
 
 PCA9685 可能在别的地址上。扫描 I²C 总线：
 
