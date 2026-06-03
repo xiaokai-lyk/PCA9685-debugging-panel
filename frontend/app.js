@@ -186,11 +186,19 @@ function connectSSE() {
 // ═══════════════════════════════════════════════════════════════════
 
 function toast(msg, className = '') {
+    // Remove any existing toast
+    document.querySelectorAll('.toast').forEach(t => t.remove());
     const el = document.createElement('div');
     el.className = `toast ${className}`;
     el.textContent = msg;
     document.body.appendChild(el);
-    el.addEventListener('animationend', () => el.remove(), { once: true });
+    // Fade out after 3s, then remove
+    setTimeout(() => { el.classList.add('out'); }, 3000);
+    el.addEventListener('animationend', (e) => {
+        if (e.target === el && e.animationName === 'toastIn' && el.classList.contains('out')) {
+            el.remove();
+        }
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════

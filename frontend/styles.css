@@ -445,8 +445,8 @@ html, body {
     color: var(--text);
     box-shadow: var(--shadow);
     z-index: 200;
-    animation: toastIn 250ms ease, toastOut 250ms ease 2.5s forwards;
+    animation: toastIn 250ms ease;
 }
+.toast.out { animation: toastIn 250ms ease reverse forwards; }
 .toast.error { border-color: var(--offline); }
 @keyframes toastIn  { from { opacity: 0; transform: translateX(-50%) translateY(10px); } }
-@keyframes toastOut { to   { opacity: 0; transform: translateX(-50%) translateY(10px); } }
