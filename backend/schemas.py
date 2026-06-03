@@ -26,6 +26,7 @@ class StatusResponse(BaseModel):
     max_pulse_us: float
     output_enabled: bool = False
     last_heartbeat: Optional[str] = None
+    last_error: str = ""
     mock_mode: bool = False
 
 

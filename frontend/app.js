@@ -16,6 +16,7 @@ const state = {
     maxPulseUs: 2400,
     outputEnabled: false,   // global output enable
     lastHeartbeat: null,    // ISO string or null
+    lastError: '',          // last hardware error message
     mockMode: false,        // true when running without real hardware
     channels: [],           // Array of 16 channel objects (filled by fetchChannels)
 };
@@ -63,6 +64,7 @@ async function fetchStatus() {
     state.outputEnabled = data.output_enabled;
     state.lastHeartbeat = data.last_heartbeat;
     state.mockMode = data.mock_mode || false;
+    state.lastError = data.last_error || '';
     renderStatusBar();
     renderGlobalEnableBtn();
 }
@@ -266,6 +268,14 @@ function renderStatusBar() {
     // Show/hide mock mode badge
     if (mockBadge) {
         mockBadge.style.display = state.mockMode ? 'inline-block' : 'none';
+    }
+
+    // Show error tooltip when offline
+    if (state.status === 'offline' && state.lastError) {
+        text.textContent = 'Offline — ' + state.lastError;
+        text.style.color = 'var(--offline)';
+    } else {
+        text.style.color = '';
     }
 }
 

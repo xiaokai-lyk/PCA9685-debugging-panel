@@ -43,6 +43,7 @@ class PCA9685Driver:
         self._lock = threading.Lock()
         self._last_heartbeat: float = 0.0
         self._online: bool = False
+        self._last_error: str = ""
 
     # ── lifecycle ──────────────────────────────────────────────────
 
@@ -65,9 +66,11 @@ class PCA9685Driver:
             self._online = True
             self._last_heartbeat = time.time()
         except Exception as exc:
-            print(f"[PCA9685] Hardware init failed: {exc}")
+            msg = f"Hardware init failed: {exc}"
+            print(f"[PCA9685] {msg}")
             self._device = None
-            self._online = False  # stay offline, heartbeat will retry
+            self._online = False
+            self._last_error = msg
 
     def close(self) -> None:
         """Release resources."""
@@ -93,10 +96,17 @@ class PCA9685Driver:
     def mock_mode(self) -> bool:
         return self._mock_mode
 
+    @property
+    def last_error(self) -> str:
+        return self._last_error
+
     # ── heartbeat ──────────────────────────────────────────────────
 
     def check_heartbeat(self) -> bool:
         """Read a register to verify the device is still reachable.
+
+        On failure, attempts to re-initialise the hardware so that
+        transient I²C errors are recovered automatically.
 
         Returns True if the device responded, False otherwise.
         """
@@ -104,6 +114,10 @@ class PCA9685Driver:
             self._last_heartbeat = time.time()
             self._online = True
             return True
+
+        # Attempt (re-)initialisation if we have no active device
+        if self._device is None:
+            self.initialize()
 
         if self._device is None:
             self._online = False
@@ -113,9 +127,11 @@ class PCA9685Driver:
             _ = self._device.mode1  # register read
             self._last_heartbeat = time.time()
             self._online = True
+            self._last_error = ""
             return True
-        except Exception:
+        except Exception as exc:
             self._online = False
+            self._last_error = f"Heartbeat failed: {exc}"
             return False
 
     # ── frequency ──────────────────────────────────────────────────

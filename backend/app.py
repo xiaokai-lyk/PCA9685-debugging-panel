@@ -102,6 +102,7 @@ def _get_status(driver: PCA9685Driver) -> StatusResponse:
         max_pulse_us=store.max_pulse_us,
         output_enabled=store.output_enabled,
         last_heartbeat=_iso_now() if driver.last_heartbeat > 0 else None,
+        last_error=driver.last_error,
         mock_mode=driver.mock_mode,
     )
 
