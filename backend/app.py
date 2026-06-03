@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -72,14 +71,13 @@ async def heartbeat_loop(driver: PCA9685Driver) -> None:
     while True:
         await asyncio.sleep(2)
         is_online = driver.check_heartbeat()
-        if previous_online is not None and previous_online != is_online:
-            await sse.broadcast(
-                "status",
-                json.dumps({
-                    "status": "online" if is_online else "offline",
-                    "last_heartbeat": _iso_now() if is_online else None,
-                }),
-            )
+        await sse.broadcast(
+            "status",
+            json.dumps({
+                "status": "online" if is_online else "offline",
+                "last_heartbeat": _iso_now() if is_online else None,
+            }),
+        )
         previous_online = is_online
 
 

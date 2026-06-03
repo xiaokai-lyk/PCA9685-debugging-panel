@@ -156,10 +156,12 @@ function connectSSE() {
     sseSource.addEventListener('status', (e) => {
         try {
             const data = JSON.parse(e.data);
+            if (data.status != state.status) {
+                toast(`Device ${data.status}`, data.status === 'online' ? '' : 'error');
+            }
             if (data.status) state.status = data.status;
             if (data.last_heartbeat !== undefined) state.lastHeartbeat = data.last_heartbeat;
             renderStatusBar();
-            toast(`Device ${data.status}`, data.status === 'online' ? '' : 'error');
         } catch (_) { /* ignore parse errors */ }
     });
 

@@ -124,7 +124,7 @@ class PCA9685Driver:
             return False
 
         try:
-            _ = self._device.mode1  # register read
+            _ = self._device.mode1_reg
             self._last_heartbeat = time.time()
             self._online = True
             self._last_error = ""
