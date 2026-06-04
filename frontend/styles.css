@@ -529,6 +529,85 @@ html, body {
     margin-top: 4px;
 }
 
+/* ── Actions Group ────────────────────────────────────────────────── */
+
+.actions-toolbar {
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    background: var(--bg-card);
+}
+
+.actions-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.actions-input-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color var(--transition);
+}
+.actions-input-row input:focus { border-color: var(--accent); }
+.actions-input-row input::placeholder { color: var(--text-muted); }
+
+/* ── Action Card ──────────────────────────────────────────────────── */
+
+.action-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    transition: border-color var(--transition);
+}
+.action-card:hover { border-color: var(--accent); }
+.action-card + .action-card { margin-top: 8px; }
+
+.action-card .action-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.action-card .action-info {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.action-card .btn-action-play {
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.action-card .btn-action-delete {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.actions-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
 /* ── Toast ────────────────────────────────────────────────────────── */
 
 .toast {

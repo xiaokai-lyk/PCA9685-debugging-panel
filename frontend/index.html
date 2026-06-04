@@ -60,7 +60,18 @@
             <h2 class="group-title" data-i18n="group.actions">Actions</h2>
         </div>
         <div class="group-body">
-            <div class="group-placeholder" data-i18n="group.placeholder">No actions configured yet.</div>
+            <div class="actions-toolbar">
+                <div class="actions-input-row">
+                    <input type="text" id="actionNameInput" maxlength="40"
+                           data-i18n-placeholder="actions.namePlaceholder"
+                           placeholder="Action name...">
+                    <button class="btn btn-primary" id="btnRecordAction"
+                            data-i18n="actions.record">▶ Record Current Action</button>
+                </div>
+                <div class="actions-list" id="actionsList">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
         </div>
     </section>
 

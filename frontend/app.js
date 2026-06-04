@@ -19,6 +19,7 @@ const state = {
     lastError: '',          // last hardware error message
     mockMode: false,        // true when running without real hardware
     channels: [],           // Array of 16 channel objects (filled by fetchChannels)
+    actions: [],            // Array of saved action objects (filled by fetchActions)
 };
 
 // Default channel template
@@ -140,6 +141,34 @@ async function importWorkspace(data) {
     });
 }
 
+async function fetchActions() {
+    const data = await api('/api/actions');
+    state.actions = data.actions;
+    renderActions();
+}
+
+async function recordAction(name) {
+    return api('/api/actions/record', {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+    });
+}
+
+async function playAction(index) {
+    return api(`/api/actions/${index}/play`, { method: 'POST' });
+}
+
+async function deleteAction(index) {
+    return api(`/api/actions/${index}`, { method: 'DELETE' });
+}
+
+async function renameAction(index, name) {
+    return api(`/api/actions/${index}/rename`, {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+    });
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // SSE Connection
 // ═══════════════════════════════════════════════════════════════════
@@ -181,6 +210,7 @@ function connectSSE() {
         // Re-fetch full state on reconnect
         fetchStatus().catch(() => {});
         fetchChannels().catch(() => {});
+        fetchActions().catch(() => {});
     };
 }
 
@@ -605,6 +635,122 @@ async function onChannelEnableToggle(ch, enableBtn, slider) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Render: Actions List
+// ═══════════════════════════════════════════════════════════════════
+
+function renderActions() {
+    const list = document.getElementById('actionsList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (state.actions.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'actions-empty';
+        empty.textContent = i18n.t('actions.empty');
+        list.appendChild(empty);
+        return;
+    }
+
+    state.actions.forEach((action, idx) => {
+        const chCount = action.channels.filter(
+            ch => ch.angle !== null || ch.duty !== null
+        ).length;
+
+        const card = document.createElement('div');
+        card.className = 'action-card';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'action-name';
+        nameSpan.textContent = action.name;
+        nameSpan.title = action.name;
+
+        const infoSpan = document.createElement('span');
+        infoSpan.className = 'action-info';
+        infoSpan.textContent = i18n.t('actions.channelsWithData', chCount);
+
+        const playBtn = document.createElement('button');
+        playBtn.className = 'btn btn-primary btn-action-play';
+        playBtn.textContent = i18n.t('actions.play');
+        playBtn.addEventListener('click', () => handlePlayAction(idx));
+
+        const renameBtn = document.createElement('button');
+        renameBtn.className = 'btn btn-outline btn-action-delete';
+        renameBtn.textContent = '✎';
+        renameBtn.title = i18n.t('actions.renamePrompt');
+        renameBtn.style.cssText = 'padding:4px 8px;font-size:12px;';
+        renameBtn.addEventListener('click', () => handleRenameAction(idx));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger btn-action-delete';
+        deleteBtn.textContent = i18n.t('actions.delete');
+        deleteBtn.addEventListener('click', () => handleDeleteAction(idx));
+
+        card.appendChild(nameSpan);
+        card.appendChild(infoSpan);
+        card.appendChild(renameBtn);
+        card.appendChild(playBtn);
+        card.appendChild(deleteBtn);
+        list.appendChild(card);
+    });
+}
+
+async function handleRecordAction() {
+    const input = document.getElementById('actionNameInput');
+    const btn = document.getElementById('btnRecordAction');
+    const name = input.value.trim();
+    if (!name) {
+        toast(i18n.t('actions.namePlaceholder'), 'error');
+        input.focus();
+        return;
+    }
+    btn.disabled = true;
+    try {
+        await recordAction(name);
+        await fetchActions();
+        input.value = '';
+        toast(i18n.t('toast.actionRecorded'));
+    } catch (err) {
+        toast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function handlePlayAction(idx) {
+    try {
+        const result = await playAction(idx);
+        toast(i18n.t('toast.actionPlayed', result.detail));
+        await fetchChannels();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function handleDeleteAction(idx) {
+    if (!confirm(i18n.t('actions.confirmDelete'))) return;
+    try {
+        await deleteAction(idx);
+        await fetchActions();
+        toast(i18n.t('toast.actionDeleted'));
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function handleRenameAction(idx) {
+    const action = state.actions[idx];
+    const newName = prompt(i18n.t('actions.renamePrompt'), action.name);
+    if (!newName || newName.trim() === '' || newName.trim() === action.name) return;
+    try {
+        await renameAction(idx, newName.trim());
+        await fetchActions();
+        toast(i18n.t('toast.actionRenamed'));
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Settings Modal
 // ═══════════════════════════════════════════════════════════════════
 
@@ -783,6 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderStatusBar();
         renderGlobalEnableBtn();
         renderAllChannels();
+        renderActions();
         // Update calibration modal title if it's open
         if (!document.getElementById('calibrateModal').classList.contains('hidden')) {
             document.getElementById('calibModalTitle').textContent = i18n.t('calibrate.title', calibChannel);
@@ -831,6 +978,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnApplyCalibrate').addEventListener('click', applyCalibrate);
     document.getElementById('btnClearCalibrate').addEventListener('click', clearCalibrate);
 
+    // ── Actions bindings ──
+    document.getElementById('btnRecordAction').addEventListener('click', handleRecordAction);
+    document.getElementById('actionNameInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleRecordAction();
+    });
+
     // Close modals on overlay click
     document.getElementById('settingsModal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeSettingsModal();
@@ -850,6 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Initial data load ──
     fetchStatus().catch(() => {});
     fetchChannels().catch(() => {});
+    fetchActions().catch(() => {});
 
     // ── SSE connection ──
     connectSSE();

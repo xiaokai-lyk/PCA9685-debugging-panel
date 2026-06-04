@@ -12,7 +12,7 @@ import threading
 from pathlib import Path
 from typing import Any, Optional
 
-from backend.schemas import ChannelState, WorkspaceData
+from backend.schemas import ActionChannelSnapshot, ActionRecord, ChannelState, WorkspaceData
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "i2c_address": 0x40,
@@ -21,6 +21,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "max_pulse_us": 2400.0,
     "output_enabled": False,
     "channels": {},
+    "actions": [],
 }
 
 
@@ -185,12 +186,14 @@ class ConfigStore:
     def export_workspace(self) -> WorkspaceData:
         """Build a full snapshot suitable for client-side download."""
         channels = [self.get_channel(i) for i in range(16)]
+        actions = self.get_actions()
         return WorkspaceData(
             i2c_address=self.i2c_address,
             frequency_hz=self.frequency_hz,
             min_pulse_us=self.min_pulse_us,
             max_pulse_us=self.max_pulse_us,
             channels=channels,
+            actions=actions,
         )
 
     def import_workspace(self, ws: WorkspaceData) -> None:
@@ -217,7 +220,134 @@ class ConfigStore:
                 # Only store if there's meaningful data
                 if any(v is not None for v in cdata.values()):
                     self._data["channels"][str(ch.channel)] = cdata
+            # Restore actions
+            self._data["actions"] = []
+            for action in ws.actions:
+                self._data["actions"].append(action.model_dump())
         self.save()
+
+
+    # ── actions ──────────────────────────────────────────────────────
+
+    def _ensure_actions(self) -> list[dict[str, Any]]:
+        """Return the actions list, creating it if missing (backward compat)."""
+        with self._lock:
+            if "actions" not in self._data:
+                self._data["actions"] = []
+            return self._data["actions"]
+
+    def record_action(self, name: str) -> ActionRecord:
+        """Snapshot all 16 channels and save as a named action."""
+        channels: list[ActionChannelSnapshot] = []
+        for i in range(16):
+            ch = self.get_channel(i)
+            channels.append(ActionChannelSnapshot(
+                channel=i,
+                name=ch.name,
+                angle=ch.angle,
+                duty=ch.duty,
+                min_angle=ch.min_angle,
+                max_angle=ch.max_angle,
+                min_pulse=ch.min_pulse,
+                max_pulse=ch.max_pulse,
+                calibrated=ch.calibrated,
+            ))
+        action = ActionRecord(name=name, channels=channels)
+        self._ensure_actions()
+        with self._lock:
+            self._data["actions"].append(action.model_dump())
+        self.save()
+        return action
+
+    def get_actions(self) -> list[ActionRecord]:
+        """Return all saved actions."""
+        raw = self._ensure_actions()
+        actions: list[ActionRecord] = []
+        for item in raw:
+            actions.append(ActionRecord(**item))
+        return actions
+
+    def get_action(self, index: int) -> ActionRecord:
+        """Return a single action by index. Raises IndexError if out of range."""
+        raw = self._ensure_actions()
+        if index < 0 or index >= len(raw):
+            raise IndexError(f"Action index {index} out of range")
+        return ActionRecord(**raw[index])
+
+    def delete_action(self, index: int) -> None:
+        """Delete an action by index. Raises IndexError if out of range."""
+        raw = self._ensure_actions()
+        if index < 0 or index >= len(raw):
+            raise IndexError(f"Action index {index} out of range")
+        with self._lock:
+            self._data["actions"].pop(index)
+        self.save()
+
+    def rename_action(self, index: int, name: str) -> None:
+        """Rename an action by index. Raises IndexError if out of range."""
+        raw = self._ensure_actions()
+        if index < 0 or index >= len(raw):
+            raise IndexError(f"Action index {index} out of range")
+        with self._lock:
+            self._data["actions"][index]["name"] = name
+        self.save()
+
+    def play_action(self, index: int, driver: Any) -> int:
+        """Play back an action on the hardware using 3-tier logic.
+
+        Tier 1: channel currently calibrated → use current calibration
+        Tier 2: no current calibration but action has snapshot → use snapshot
+        Tier 3: no calibration anywhere → use raw duty
+
+        Also persists new positions to config and returns count of channels set.
+        """
+        action = self.get_action(index)
+        channels_set = 0
+
+        for ch in action.channels:
+            current = self.get_channel(ch.channel)
+
+            if current.calibrated:
+                # Tier 1: use current calibration
+                calib = self.get_channel_raw(ch.channel).get("calibration", {})
+                if calib and ch.angle is not None:
+                    driver.set_channel_angle(
+                        ch.channel, ch.angle,
+                        calib["min_angle"], calib["max_angle"],
+                        calib["min_pulse"], calib["max_pulse"],
+                    )
+                    self.set_channel_output(ch.channel, angle=ch.angle)
+                    channels_set += 1
+                elif ch.duty is not None:
+                    driver.set_channel_duty(ch.channel, ch.duty)
+                    self.set_channel_output(ch.channel, duty=ch.duty)
+                    channels_set += 1
+
+            elif ch.calibrated:
+                # Tier 2: use snapshot calibration
+                if ch.angle is not None and ch.min_angle is not None:
+                    driver.set_channel_angle(
+                        ch.channel, ch.angle,
+                        ch.min_angle, ch.max_angle,
+                        ch.min_pulse, ch.max_pulse,
+                    )
+                    self.set_channel_output(ch.channel, angle=ch.angle)
+                    channels_set += 1
+                elif ch.duty is not None:
+                    driver.set_channel_duty(ch.channel, ch.duty)
+                    self.set_channel_output(ch.channel, duty=ch.duty)
+                    channels_set += 1
+
+            elif ch.duty is not None:
+                # Tier 3: raw duty
+                driver.set_channel_duty(ch.channel, ch.duty)
+                self.set_channel_output(ch.channel, duty=ch.duty)
+                channels_set += 1
+
+            # else: no position data for this channel, skip
+
+        self.save()
+        return channels_set
 
 
 # ── Default instance ──────────────────────────────────────────────────

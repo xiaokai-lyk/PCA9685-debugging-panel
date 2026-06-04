@@ -82,6 +82,20 @@ const i18n = {
             'toast.useDutyMode': 'Use duty mode for channel {0} instead',
             'toast.importFailed': 'Import failed: {0}',
 
+            // ── Actions ───────────────────────────────────────────
+            'actions.record': 'Record Current Action',
+            'actions.namePlaceholder': 'Action name...',
+            'actions.play': 'Play',
+            'actions.delete': 'Delete',
+            'actions.empty': 'No actions recorded yet.',
+            'actions.channelsWithData': '{0} positions',
+            'actions.confirmDelete': 'Delete this action?',
+            'actions.renamePrompt': 'New name for this action:',
+            'toast.actionRecorded': 'Action recorded',
+            'toast.actionPlayed': '{0}',
+            'toast.actionDeleted': 'Action deleted',
+            'toast.actionRenamed': 'Action renamed',
+
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': 'min_angle must be < max_angle',
             'validation.minPulseLtMaxPulse': 'min_pulse must be < max_pulse',
@@ -158,6 +172,20 @@ const i18n = {
             'toast.channelCalibrated': '通道 {0} 已校准',
             'toast.useDutyMode': '请改用占空比模式控制通道 {0}',
             'toast.importFailed': '导入失败：{0}',
+
+            // ── Actions ───────────────────────────────────────────
+            'actions.record': '记录当前动作',
+            'actions.namePlaceholder': '动作名称...',
+            'actions.play': '执行',
+            'actions.delete': '删除',
+            'actions.empty': '暂无记录的动作。',
+            'actions.channelsWithData': '{0} 个位置',
+            'actions.confirmDelete': '确认删除此动作？',
+            'actions.renamePrompt': '为此动作输入新名称：',
+            'toast.actionRecorded': '动作已记录',
+            'toast.actionPlayed': '{0}',
+            'toast.actionDeleted': '动作已删除',
+            'toast.actionRenamed': '动作已重命名',
 
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': '最小角度必须小于最大角度',

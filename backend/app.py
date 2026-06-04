@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.config_store import store
 from backend.pca9685 import get_driver, PCA9685Driver
 from backend.schemas import (
+    ActionsListResponse,
     CalibrateRequest,
     ChannelsResponse,
     DeviceStatus,
@@ -25,6 +26,8 @@ from backend.schemas import (
     OutputChannelRequest,
     OutputGlobalRequest,
     PulseRangeRequest,
+    RecordActionRequest,
+    RenameActionRequest,
     SetNameRequest,
     SetServoRequest,
     StatusResponse,
@@ -385,6 +388,59 @@ async def api_workspace_import(body: WorkspaceData, request: Request) -> Message
     store.import_workspace(body)
     _apply_config(driver)
     return MessageResponse(detail="Workspace imported and applied")
+
+
+# ── Actions endpoints ─────────────────────────────────────────────────
+
+@app.get("/api/actions", response_model=ActionsListResponse)
+async def api_actions_list() -> ActionsListResponse:
+    """Return all saved action records."""
+    actions = store.get_actions()
+    return ActionsListResponse(actions=actions)
+
+
+@app.post("/api/actions/record", response_model=MessageResponse)
+async def api_actions_record(body: RecordActionRequest) -> MessageResponse:
+    """Record the current position of all 16 channels as a named action."""
+    action = store.record_action(body.name)
+    ch_count = sum(1 for ch in action.channels if ch.angle is not None or ch.duty is not None)
+    return MessageResponse(
+        detail=f"Action '{body.name}' recorded with {ch_count}/{len(action.channels)} channels set"
+    )
+
+
+@app.post("/api/actions/{index}/play", response_model=MessageResponse)
+async def api_actions_play(index: int, request: Request) -> MessageResponse:
+    """Play back a saved action, restoring all channel positions."""
+    driver: PCA9685Driver = request.app.state.driver
+    _check_driver(driver)
+    try:
+        channels_set = store.play_action(index, driver)
+        return MessageResponse(
+            detail=f"Action played: {channels_set} channels set"
+        )
+    except IndexError:
+        raise HTTPException(status_code=404, detail="Action not found")
+
+
+@app.delete("/api/actions/{index}", response_model=MessageResponse)
+async def api_actions_delete(index: int) -> MessageResponse:
+    """Delete a saved action."""
+    try:
+        store.delete_action(index)
+        return MessageResponse(detail="Action deleted")
+    except IndexError:
+        raise HTTPException(status_code=404, detail="Action not found")
+
+
+@app.post("/api/actions/{index}/rename", response_model=MessageResponse)
+async def api_actions_rename(index: int, body: RenameActionRequest) -> MessageResponse:
+    """Rename a saved action."""
+    try:
+        store.rename_action(index, body.name)
+        return MessageResponse(detail=f"Action renamed to '{body.name}'")
+    except IndexError:
+        raise HTTPException(status_code=404, detail="Action not found")
 
 
 # ── SSE endpoint ─────────────────────────────────────────────────────

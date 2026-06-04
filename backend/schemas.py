@@ -87,6 +87,39 @@ class OutputChannelRequest(BaseModel):
     enabled: bool
 
 
+# ── Actions ───────────────────────────────────────────────────────────
+
+class ActionChannelSnapshot(BaseModel):
+    """Per-channel position snapshot within a recorded action."""
+    channel: int = Field(ge=0, le=15)
+    name: str = ""
+    angle: Optional[float] = None
+    duty: Optional[float] = None
+    min_angle: Optional[float] = None
+    max_angle: Optional[float] = None
+    min_pulse: Optional[float] = None
+    max_pulse: Optional[float] = None
+    calibrated: bool = False
+
+
+class ActionRecord(BaseModel):
+    """A named action containing position snapshots for all 16 channels."""
+    name: str
+    channels: list[ActionChannelSnapshot]
+
+
+class ActionsListResponse(BaseModel):
+    actions: list[ActionRecord]
+
+
+class RecordActionRequest(BaseModel):
+    name: str
+
+
+class RenameActionRequest(BaseModel):
+    name: str
+
+
 # ── Workspace ────────────────────────────────────────────────────────
 
 class WorkspaceData(BaseModel):
@@ -95,6 +128,7 @@ class WorkspaceData(BaseModel):
     min_pulse_us: float
     max_pulse_us: float
     channels: list[ChannelState]
+    actions: list[ActionRecord] = []
 
 
 # ── Generic ──────────────────────────────────────────────────────────
