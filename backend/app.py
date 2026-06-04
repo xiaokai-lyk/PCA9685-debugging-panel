@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
+import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.config_store import store
@@ -28,6 +30,16 @@ from backend.schemas import (
     StatusResponse,
     WorkspaceData,
 )
+
+# ── Debug mode flag (set by main.py before server starts) ─────────────
+
+_debug_mode: bool = False
+
+
+def configure_debug(enabled: bool) -> None:
+    """Enable or disable debug mode (called from launcher before startup)."""
+    global _debug_mode
+    _debug_mode = enabled
 
 # ── SSE Manager ───────────────────────────────────────────────────────
 
@@ -104,7 +116,10 @@ def _get_status(driver: PCA9685Driver) -> StatusResponse:
 
 def _check_driver(driver: PCA9685Driver) -> None:
     if not driver.online and not driver.mock_mode:
-        raise HTTPException(status_code=503, detail="PCA9685 device offline")
+        detail = "PCA9685 device offline"
+        if _debug_mode and driver.last_error:
+            detail = f"PCA9685 device offline — {driver.last_error}"
+        raise HTTPException(status_code=503, detail=detail)
 
 
 # ── Lifespan ─────────────────────────────────────────────────────────
@@ -174,6 +189,36 @@ if not FRONTEND_DIR.is_dir():
     FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 
 app = FastAPI(title="PCA9685 Debug Panel", lifespan=lifespan)
+
+
+# ── Debug middleware ──────────────────────────────────────────────────
+
+@app.middleware("http")
+async def debug_request_log(request: Request, call_next):
+    if _debug_mode:
+        start = time.time()
+        response = await call_next(request)
+        duration = (time.time() - start) * 1000
+        print(f"[debug] {request.method} {request.url.path} → {response.status_code} ({duration:.1f}ms)")
+        return response
+    return await call_next(request)
+
+
+# ── Global exception handler (debug mode: return traceback) ──────────
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    if _debug_mode:
+        tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"{type(exc).__name__}: {exc}\n\n{tb}"},
+        )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
 
 # Static files (CSS, JS) — served before the catch-all
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
