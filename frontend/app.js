@@ -25,7 +25,7 @@ const state = {
 function defaultChannel(i) {
     return {
         channel: i,
-        name: `Channel ${i}`,
+        name: i18n.t('channel.defaultName', i),
         enabled: true,
         angle: null,
         duty: null,
@@ -157,7 +157,10 @@ function connectSSE() {
         try {
             const data = JSON.parse(e.data);
             if (data.status != state.status) {
-                toast(`Device ${data.status}`, data.status === 'online' ? '' : 'error');
+                const msg = data.status === 'online'
+                    ? i18n.t('toast.deviceOnline')
+                    : i18n.t('toast.deviceOffline');
+                toast(msg, data.status === 'online' ? '' : 'error');
             }
             if (data.status) state.status = data.status;
             if (data.last_heartbeat !== undefined) state.lastHeartbeat = data.last_heartbeat;
@@ -207,7 +210,7 @@ function toast(msg, className = '') {
 
 function makeEditable(displayEl, onCommit) {
     displayEl.style.cursor = 'text';
-    displayEl.title = 'Click to edit';
+    displayEl.title = i18n.t('tooltip.clickToEdit');
 
     displayEl.addEventListener('click', () => {
         // Extract numeric value from display text
@@ -264,7 +267,7 @@ function renderStatusBar() {
     const mockBadge = document.getElementById('mockBadge');
 
     indicator.className = 'status-indicator ' + state.status;
-    text.textContent = state.status.charAt(0).toUpperCase() + state.status.slice(1);
+    text.textContent = i18n.t('status.' + state.status);
     i2c.textContent = '0x' + state.i2cAddress.toString(16).toUpperCase();
     freq.textContent = state.frequencyHz + ' Hz';
 
@@ -282,7 +285,7 @@ function renderStatusBar() {
 
     // Show error tooltip when offline
     if (state.status === 'offline' && state.lastError) {
-        text.textContent = 'Offline — ' + state.lastError;
+        text.textContent = i18n.t('status.offline') + ' — ' + state.lastError;
         text.style.color = 'var(--offline)';
     } else {
         text.style.color = '';
@@ -293,10 +296,10 @@ function renderGlobalEnableBtn() {
     const btn = document.getElementById('btnGlobalEnable');
     if (!btn) return;
     if (state.outputEnabled) {
-        btn.textContent = 'ENABLED';
+        btn.textContent = i18n.t('btn.enabled');
         btn.className = 'btn btn-enable enabled';
     } else {
-        btn.textContent = 'DISABLED';
+        btn.textContent = i18n.t('btn.disabled');
         btn.className = 'btn btn-enable disabled';
     }
 }
@@ -327,7 +330,7 @@ function createChannelCard(ch) {
 
     const label = document.createElement('span');
     label.className = 'channel-label';
-    label.textContent = `CH ${ch.channel}`;
+    label.textContent = i18n.t('channel.label', ch.channel);
 
     const nameInput = document.createElement('input');
     nameInput.className = 'channel-name';
@@ -341,7 +344,7 @@ function createChannelCard(ch) {
     const calibBtn = document.createElement('button');
     calibBtn.className = 'btn-calibrate' + (ch.calibrated ? ' active' : '');
     calibBtn.textContent = '⚙';
-    calibBtn.title = ch.calibrated ? 'Edit calibration' : 'Calibrate';
+    calibBtn.title = ch.calibrated ? i18n.t('tooltip.editCalibration') : i18n.t('tooltip.calibrate');
     calibBtn.addEventListener('click', () => openCalibrateModal(ch.channel));
 
     header.appendChild(label);
@@ -405,16 +408,16 @@ function createChannelCard(ch) {
     // Per-channel enable toggle
     const enableBtn = document.createElement('button');
     enableBtn.className = 'channel-enable-toggle ' + (ch.enabled ? 'on' : 'off');
-    enableBtn.textContent = ch.enabled ? 'ON' : 'OFF';
-    enableBtn.title = ch.enabled ? 'Disable this channel' : 'Enable this channel';
+    enableBtn.textContent = ch.enabled ? i18n.t('channel.on') : i18n.t('channel.off');
+    enableBtn.title = ch.enabled ? i18n.t('tooltip.disableChannel') : i18n.t('tooltip.enableChannel');
     enableBtn.addEventListener('click', () => onChannelEnableToggle(ch, enableBtn, slider));
 
     const modeBtn = document.createElement('button');
     modeBtn.className = 'mode-toggle';
-    modeBtn.textContent = ch.mode === 'angle' ? 'Angle' : 'Duty';
+    modeBtn.textContent = ch.mode === 'angle' ? i18n.t('channel.modeAngle') : i18n.t('channel.modeDuty');
     modeBtn.addEventListener('click', () => {
         ch.mode = (ch.mode === 'angle') ? 'duty' : 'angle';
-        modeBtn.textContent = ch.mode === 'angle' ? 'Angle' : 'Duty';
+        modeBtn.textContent = ch.mode === 'angle' ? i18n.t('channel.modeAngle') : i18n.t('channel.modeDuty');
         configSlider();
     });
 
@@ -549,8 +552,8 @@ async function onChannelEnableToggle(ch, enableBtn, slider) {
         await setOutputChannel(ch.channel, newEnabled);
         ch.enabled = newEnabled;
         enableBtn.className = 'channel-enable-toggle ' + (ch.enabled ? 'on' : 'off');
-        enableBtn.textContent = ch.enabled ? 'ON' : 'OFF';
-        enableBtn.title = ch.enabled ? 'Disable this channel' : 'Enable this channel';
+        enableBtn.textContent = ch.enabled ? i18n.t('channel.on') : i18n.t('channel.off');
+        enableBtn.title = ch.enabled ? i18n.t('tooltip.disableChannel') : i18n.t('tooltip.enableChannel');
         slider.disabled = !ch.enabled;
         const card = document.querySelector(`.channel-card[data-channel="${ch.channel}"]`);
         if (card) {
@@ -598,7 +601,7 @@ async function applySettings() {
         }
         renderStatusBar();
         closeSettingsModal();
-        toast('Settings applied');
+        toast(i18n.t('toast.settingsApplied'));
     } catch (err) {
         toast(err.message, 'error');
     }
@@ -621,7 +624,7 @@ let calibChannel = 0;
 function openCalibrateModal(channel) {
     calibChannel = channel;
     const ch = state.channels[channel];
-    document.getElementById('calibChannelNum').textContent = channel;
+    document.getElementById('calibModalTitle').textContent = i18n.t('calibrate.title', channel);
 
     document.getElementById('calibMinAngle').value = ch.calibrated ? ch.minAngle : 0;
     document.getElementById('calibMaxAngle').value = ch.calibrated ? ch.maxAngle : 180;
@@ -642,8 +645,8 @@ async function applyCalibrate() {
     const minPulse = Number(document.getElementById('calibMinPulse').value);
     const maxPulse = Number(document.getElementById('calibMaxPulse').value);
 
-    if (minAngle >= maxAngle) { toast('min_angle must be < max_angle', 'error'); return; }
-    if (minPulse >= maxPulse) { toast('min_pulse must be < max_pulse', 'error'); return; }
+    if (minAngle >= maxAngle) { toast(i18n.t('validation.minAngleLtMaxAngle'), 'error'); return; }
+    if (minPulse >= maxPulse) { toast(i18n.t('validation.minPulseLtMaxPulse'), 'error'); return; }
 
     try {
         await calibrateChannel(calibChannel, {
@@ -664,7 +667,7 @@ async function applyCalibrate() {
         renderAllChannels();
         // Set initial angle
         await setServo(calibChannel, ch.angle, null);
-        toast(`Channel ${calibChannel} calibrated`);
+        toast(i18n.t('toast.channelCalibrated', calibChannel));
     } catch (err) {
         toast(err.message, 'error');
     }
@@ -679,7 +682,7 @@ async function clearCalibrate() {
         // means no calibration.  But the API doesn't support clearing.
         // WORKAROUND: set min_angle=max_angle, which makes it invalid.
         // Better: just treat the "Clear" as switching to duty mode.
-        toast(`Use duty mode for channel ${calibChannel} instead`);
+        toast(i18n.t('toast.useDutyMode', calibChannel));
         state.channels[calibChannel].calibrated = false;
         state.channels[calibChannel].mode = 'duty';
         closeCalibrateModal();
@@ -704,7 +707,7 @@ async function handleExport() {
         a.download = `pca9685-workspace-${timestamp}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        toast('Workspace exported');
+        toast(i18n.t('toast.workspaceExported'));
     } catch (err) {
         toast(err.message, 'error');
     }
@@ -718,9 +721,9 @@ async function handleImport(file) {
         // Re-fetch everything
         await fetchStatus();
         await fetchChannels();
-        toast('Workspace imported & applied');
+        toast(i18n.t('toast.workspaceImported'));
     } catch (err) {
-        toast('Import failed: ' + err.message, 'error');
+        toast(i18n.t('toast.importFailed', err.message), 'error');
     }
 }
 
@@ -729,6 +732,25 @@ async function handleImport(file) {
 // ═══════════════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ── i18n initialisation ──
+    i18n.init();
+
+    // Re-render dynamic UI when language changes
+    i18n._onChange = () => {
+        renderStatusBar();
+        renderGlobalEnableBtn();
+        renderAllChannels();
+        // Update calibration modal title if it's open
+        if (!document.getElementById('calibrateModal').classList.contains('hidden')) {
+            document.getElementById('calibModalTitle').textContent = i18n.t('calibrate.title', calibChannel);
+        }
+    };
+
+    // Language selector
+    document.getElementById('langSelect').addEventListener('change', (e) => {
+        i18n.setLocale(e.target.value);
+    });
+
     // ── Button bindings ──
     document.getElementById('btnGlobalEnable').addEventListener('click', async () => {
         const btn = document.getElementById('btnGlobalEnable');
@@ -740,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderGlobalEnableBtn();
             // Re-fetch channels to sync enable states
             await fetchChannels();
-            toast(state.outputEnabled ? 'Output enabled' : 'Output disabled');
+            toast(state.outputEnabled ? i18n.t('toast.outputEnabled') : i18n.t('toast.outputDisabled'));
         } catch (err) {
             toast(err.message, 'error');
         } finally {

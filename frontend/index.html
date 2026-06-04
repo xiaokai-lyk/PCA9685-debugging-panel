@@ -14,25 +14,29 @@
         <div class="status-left">
             <span class="status-indicator" id="statusIndicator"></span>
             <span class="status-text" id="statusText">Connecting…</span>
-            <span class="mock-badge" id="mockBadge">MOCK MODE</span>
+            <span class="mock-badge" id="mockBadge" data-i18n="status.mockMode">MOCK MODE</span>
             <span class="status-divider">|</span>
-            <span class="status-label">I²C:</span>
+            <span class="status-label" data-i18n="status.i2c">I²C:</span>
             <span class="status-value" id="statusI2c">0x40</span>
             <span class="status-divider">|</span>
-            <span class="status-label">Freq:</span>
+            <span class="status-label" data-i18n="status.freq">Freq:</span>
             <span class="status-value" id="statusFreq">50 Hz</span>
             <span class="status-divider">|</span>
-            <span class="status-label">Heartbeat:</span>
+            <span class="status-label" data-i18n="status.heartbeat">Heartbeat:</span>
             <span class="status-value" id="statusHeartbeat">—</span>
         </div>
         <div class="status-right">
-            <button class="btn btn-enable disabled" id="btnGlobalEnable" title="Toggle all channel outputs on/off">
+            <select id="langSelect" class="lang-select" title="Language / 语言">
+                <option value="en">EN</option>
+                <option value="zh-CN">中文</option>
+            </select>
+            <button class="btn btn-enable disabled" id="btnGlobalEnable" data-i18n-title="tooltip.globalEnable">
                 DISABLED
             </button>
-            <button class="btn btn-outline" id="btnExport" title="Save workspace to computer">⬇ Export</button>
-            <button class="btn btn-outline" id="btnImport" title="Load workspace from computer">⬆ Import</button>
+            <button class="btn btn-outline" id="btnExport" data-i18n-title="tooltip.export" data-i18n="btn.export">⬇ Export</button>
+            <button class="btn btn-outline" id="btnImport" data-i18n-title="tooltip.import" data-i18n="btn.import">⬆ Import</button>
             <input type="file" id="importFileInput" accept=".json" hidden>
-            <button class="btn btn-outline" id="btnSettings">⚙ Settings</button>
+            <button class="btn btn-outline" id="btnSettings" data-i18n="btn.settings">⚙ Settings</button>
         </div>
     </header>
 
@@ -45,36 +49,36 @@
     <div class="modal-overlay hidden" id="settingsModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>Advanced Settings</h2>
+                <h2 data-i18n="settings.title">Advanced Settings</h2>
                 <button class="btn-close" id="btnCloseSettings">&times;</button>
             </div>
             <div class="modal-body">
                 <!-- Frequency -->
                 <div class="setting-group">
-                    <label for="settingFreq">PWM Frequency</label>
+                    <label for="settingFreq" data-i18n="settings.frequency">PWM Frequency</label>
                     <div class="setting-row">
                         <input type="range" id="settingFreq" min="40" max="400" step="1" value="50">
                         <input type="number" id="settingFreqNum" min="40" max="400" step="1" value="50">
-                        <span class="unit">Hz</span>
+                        <span class="unit" data-i18n="settings.hz">Hz</span>
                     </div>
-                    <p class="help-text">Default 50 Hz. Range: 40–400 Hz.</p>
+                    <p class="help-text" data-i18n="settings.freqHelp">Default 50 Hz. Range: 40–400 Hz.</p>
                 </div>
 
                 <!-- Pulse Range -->
                 <div class="setting-group">
-                    <label>Default Pulse Width Range</label>
+                    <label data-i18n="settings.pulseRange">Default Pulse Width Range</label>
                     <div class="setting-row">
-                        <span class="unit">Min</span>
+                        <span class="unit" data-i18n="settings.min">Min</span>
                         <input type="number" id="settingPulseMin" min="100" max="10000" step="10" value="600">
-                        <span class="unit">µs</span>
-                        <span class="unit">Max</span>
+                        <span class="unit" data-i18n="settings.us">µs</span>
+                        <span class="unit" data-i18n="settings.max">Max</span>
                         <input type="number" id="settingPulseMax" min="100" max="10000" step="10" value="2400">
-                        <span class="unit">µs</span>
+                        <span class="unit" data-i18n="settings.us">µs</span>
                     </div>
-                    <p class="help-text">Used for uncalibrated channels.</p>
+                    <p class="help-text" data-i18n="settings.pulseHelp">Used for uncalibrated channels.</p>
                 </div>
 
-                <button class="btn btn-primary" id="btnApplySettings">Apply</button>
+                <button class="btn btn-primary" id="btnApplySettings" data-i18n="btn.apply">Apply</button>
             </div>
         </div>
     </div>
@@ -83,38 +87,39 @@
     <div class="modal-overlay hidden" id="calibrateModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>Calibrate Channel <span id="calibChannelNum">0</span></h2>
+                <h2 id="calibModalTitle">Calibrate Channel 0</h2>
                 <button class="btn-close" id="btnCloseCalibrate">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="setting-group">
-                    <label>Angle Range</label>
+                    <label data-i18n="calibrate.angleRange">Angle Range</label>
                     <div class="setting-row">
-                        <span class="unit">Min</span>
+                        <span class="unit" data-i18n="settings.min">Min</span>
                         <input type="number" id="calibMinAngle" step="1" value="0">
-                        <span class="unit">°</span>
-                        <span class="unit">Max</span>
+                        <span class="unit" data-i18n="calibrate.deg">°</span>
+                        <span class="unit" data-i18n="settings.max">Max</span>
                         <input type="number" id="calibMaxAngle" step="1" value="180">
-                        <span class="unit">°</span>
+                        <span class="unit" data-i18n="calibrate.deg">°</span>
                     </div>
                 </div>
                 <div class="setting-group">
-                    <label>Pulse Width Range</label>
+                    <label data-i18n="calibrate.pulseRange">Pulse Width Range</label>
                     <div class="setting-row">
-                        <span class="unit">Min</span>
+                        <span class="unit" data-i18n="settings.min">Min</span>
                         <input type="number" id="calibMinPulse" min="100" max="10000" step="10" value="600">
-                        <span class="unit">µs</span>
-                        <span class="unit">Max</span>
+                        <span class="unit" data-i18n="settings.us">µs</span>
+                        <span class="unit" data-i18n="settings.max">Max</span>
                         <input type="number" id="calibMaxPulse" min="100" max="10000" step="10" value="2400">
-                        <span class="unit">µs</span>
+                        <span class="unit" data-i18n="settings.us">µs</span>
                     </div>
                 </div>
-                <button class="btn btn-primary" id="btnApplyCalibrate">Save Calibration</button>
-                <button class="btn btn-danger" id="btnClearCalibrate">Clear Calibration</button>
+                <button class="btn btn-primary" id="btnApplyCalibrate" data-i18n="btn.saveCalibration">Save Calibration</button>
+                <button class="btn btn-danger" id="btnClearCalibrate" data-i18n="btn.clearCalibration">Clear Calibration</button>
             </div>
         </div>
     </div>
 
+    <script src="/static/i18n.js"></script>
     <script src="/static/app.js"></script>
 </body>
 </html>
