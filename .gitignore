@@ -15,5 +15,8 @@ plan.md
 # Hardware-sepecific configurations
 config.json
 
-# Local-only uv configuration
+# Local configuration
 uv.toml
+
+# AI Agent
+CLAUDE.md
