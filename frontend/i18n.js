@@ -84,6 +84,7 @@ const i18n = {
 
             // ── Actions ───────────────────────────────────────────
             'actions.record': 'Record Current Action',
+            'actions.defaultName': 'Action {0}',
             'actions.namePlaceholder': 'Action name...',
             'actions.play': 'Play',
             'actions.delete': 'Delete',
@@ -175,6 +176,7 @@ const i18n = {
 
             // ── Actions ───────────────────────────────────────────
             'actions.record': '记录当前动作',
+            'actions.defaultName': '动作 {0}',
             'actions.namePlaceholder': '动作名称...',
             'actions.play': '执行',
             'actions.delete': '删除',

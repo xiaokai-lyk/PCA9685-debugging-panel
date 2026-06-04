@@ -697,17 +697,13 @@ function renderActions() {
 async function handleRecordAction() {
     const input = document.getElementById('actionNameInput');
     const btn = document.getElementById('btnRecordAction');
-    const name = input.value.trim();
-    if (!name) {
-        toast(i18n.t('actions.namePlaceholder'), 'error');
-        input.focus();
-        return;
-    }
+    const finalName = input.value.trim() || input.placeholder;
     btn.disabled = true;
     try {
-        await recordAction(name);
+        await recordAction(finalName);
         await fetchActions();
         input.value = '';
+        input.placeholder = i18n.t('actions.defaultName', state.actions.length + 1);
         toast(i18n.t('toast.actionRecorded'));
     } catch (err) {
         toast(err.message, 'error');
@@ -930,6 +926,11 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGlobalEnableBtn();
         renderAllChannels();
         renderActions();
+        // Update action name placeholder
+        const inp = document.getElementById('actionNameInput');
+        if (inp && !inp.value) {
+            inp.placeholder = i18n.t('actions.defaultName', state.actions.length + 1);
+        }
         // Update calibration modal title if it's open
         if (!document.getElementById('calibrateModal').classList.contains('hidden')) {
             document.getElementById('calibModalTitle').textContent = i18n.t('calibrate.title', calibChannel);
@@ -979,8 +980,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnClearCalibrate').addEventListener('click', clearCalibrate);
 
     // ── Actions bindings ──
+    const actionInput = document.getElementById('actionNameInput');
+    actionInput.placeholder = i18n.t('actions.defaultName', 1);
     document.getElementById('btnRecordAction').addEventListener('click', handleRecordAction);
-    document.getElementById('actionNameInput').addEventListener('keydown', (e) => {
+    actionInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') handleRecordAction();
     });
 
