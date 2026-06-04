@@ -181,6 +181,15 @@ class ConfigStore:
             "max_pulse": max_pulse,
         })
 
+    def clear(self) -> None:
+        """Reset all config to factory defaults and delete the config file."""
+        with self._lock:
+            self._data = {**DEFAULT_CONFIG, "channels": {}}
+        try:
+            self._path.unlink(missing_ok=True)
+        except OSError:
+            pass
+
     # ── workspace ──────────────────────────────────────────────────
 
     def export_workspace(self) -> WorkspaceData:

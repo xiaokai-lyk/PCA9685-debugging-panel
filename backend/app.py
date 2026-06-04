@@ -390,6 +390,15 @@ async def api_workspace_import(body: WorkspaceData, request: Request) -> Message
     return MessageResponse(detail="Workspace imported and applied")
 
 
+@app.post("/api/config/clear", response_model=MessageResponse)
+async def api_config_clear(request: Request) -> MessageResponse:
+    """Reset all configuration to factory defaults and delete config.json."""
+    driver: PCA9685Driver = request.app.state.driver
+    store.clear()
+    _apply_config(driver)
+    return MessageResponse(detail="Config cleared to defaults")
+
+
 # ── Actions endpoints ─────────────────────────────────────────────────
 
 @app.get("/api/actions", response_model=ActionsListResponse)

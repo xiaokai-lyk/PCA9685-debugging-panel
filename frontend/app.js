@@ -141,6 +141,10 @@ async function importWorkspace(data) {
     });
 }
 
+async function clearConfig() {
+    return api('/api/config/clear', { method: 'POST' });
+}
+
 async function fetchActions() {
     const data = await api('/api/actions');
     state.actions = data.actions;
@@ -789,6 +793,21 @@ async function applySettings() {
     }
 }
 
+async function handleClearCache() {
+    if (!confirm(i18n.t('settings.confirmClearCache'))) return;
+    try {
+        await clearConfig();
+        // Re-fetch everything to reflect the reset state
+        await fetchStatus();
+        await fetchChannels();
+        await fetchActions();
+        closeSettingsModal();
+        toast(i18n.t('toast.cacheCleared'));
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
 // Frequency slider ↔ number sync
 document.addEventListener('DOMContentLoaded', () => {
     const freqSlider = document.getElementById('settingFreq');
@@ -973,6 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSettings').addEventListener('click', openSettingsModal);
     document.getElementById('btnCloseSettings').addEventListener('click', closeSettingsModal);
     document.getElementById('btnApplySettings').addEventListener('click', applySettings);
+    document.getElementById('btnClearCache').addEventListener('click', handleClearCache);
 
     // Calibrate modal
     document.getElementById('btnCloseCalibrate').addEventListener('click', closeCalibrateModal);

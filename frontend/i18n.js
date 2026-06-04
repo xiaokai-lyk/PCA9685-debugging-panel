@@ -63,6 +63,8 @@ const i18n = {
             'settings.us': 'µs',
             'settings.freqHelp': 'Default 50 Hz. Range: 40–400 Hz.',
             'settings.pulseHelp': 'Used for uncalibrated channels.',
+            'settings.clearCache': 'Clear Cache',
+            'settings.confirmClearCache': 'This will reset ALL settings to defaults and delete config.json. YOU WILL LOSE ALL YOUR CALIBRATIONS AND ACTIONS. Are you sure?',
 
             // ── Calibration Modal ───────────────────────────────────
             'calibrate.title': 'Calibrate Channel {0}',
@@ -96,6 +98,7 @@ const i18n = {
             'toast.actionPlayed': '{0}',
             'toast.actionDeleted': 'Action deleted',
             'toast.actionRenamed': 'Action renamed',
+            'toast.cacheCleared': 'Cache cleared — config reset to defaults',
 
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': 'min_angle must be < max_angle',
@@ -155,6 +158,8 @@ const i18n = {
             'settings.us': 'µs',
             'settings.freqHelp': '默认 50 Hz。范围：40–400 Hz。',
             'settings.pulseHelp': '用于未校准的通道。',
+            'settings.clearCache': '清除缓存',
+            'settings.confirmClearCache': '这将重置所有设置为默认值并删除 config.json。你将失去所有校准和动作。确定要继续吗？',
 
             // ── Calibration Modal ───────────────────────────────────
             'calibrate.title': '校准通道 {0}',
@@ -188,6 +193,7 @@ const i18n = {
             'toast.actionPlayed': '{0}',
             'toast.actionDeleted': '动作已删除',
             'toast.actionRenamed': '动作已重命名',
+            'toast.cacheCleared': '缓存已清除 — 配置已重置为默认值',
 
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': '最小角度必须小于最大角度',
