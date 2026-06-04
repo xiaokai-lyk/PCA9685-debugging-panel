@@ -172,13 +172,14 @@ class PCA9685Driver:
     def _write_channel(self, channel: int, duty_cycle: int) -> None:
         """Write raw duty_cycle to a channel (0–65535)."""
         with self._lock:
-            self._mock_channels[channel] = duty_cycle
             if self._device is not None:
                 try:
                     self._device.channels[channel].duty_cycle = duty_cycle
                 except Exception:
                     self._online = False
                     raise
+            else:
+                self._mock_channels[channel] = duty_cycle
 
     # ── public API ─────────────────────────────────────────────────
 

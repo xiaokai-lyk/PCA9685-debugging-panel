@@ -13,7 +13,6 @@ from pydantic import BaseModel, Field
 class DeviceStatus(str, Enum):
     ONLINE = "online"
     OFFLINE = "offline"
-    ERROR = "error"
 
 
 # ── Response models ──────────────────────────────────────────────────
@@ -33,7 +32,7 @@ class StatusResponse(BaseModel):
 class ChannelState(BaseModel):
     channel: int = Field(ge=0, le=15)
     name: str = ""
-    enabled: bool = True
+    enabled: bool = False
     angle: Optional[float] = None
     duty: Optional[float] = None
     min_angle: Optional[float] = None

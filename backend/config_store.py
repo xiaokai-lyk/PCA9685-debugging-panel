@@ -35,10 +35,6 @@ class ConfigStore:
 
     # ── low-level helpers ──────────────────────────────────────────
 
-    def _default_channels(self) -> dict[str, Any]:
-        """Return an empty per-channel dict with defaults."""
-        return {}
-
     def load(self) -> None:
         """Read config.json, merging missing keys from defaults."""
         if not self._path.exists():
