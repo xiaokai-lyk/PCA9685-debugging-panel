@@ -50,10 +50,6 @@ class ConfigStore:
             # Ensure channels sub-dict exists
             if not isinstance(self._data.get("channels"), dict):
                 self._data["channels"] = {}
-            # Convert channel keys to int (JSON only allows string keys)
-            self._data["channels"] = {
-                int(k): v for k, v in self._data["channels"].items()
-            }
 
     def save(self) -> None:
         """Persist current config to disk."""
