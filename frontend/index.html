@@ -40,10 +40,29 @@
         </div>
     </header>
 
-    <!-- ═══ Channel Grid ═══ -->
-    <main class="channel-grid" id="channelGrid">
-        <!-- 16 channel cards rendered by JS -->
-    </main>
+    <!-- ═══ Channels Group ═══ -->
+    <section class="group" id="group-channels">
+        <div class="group-header" data-group="channels">
+            <span class="group-arrow"></span>
+            <h2 class="group-title" data-i18n="group.channels">Channels</h2>
+        </div>
+        <div class="group-body">
+            <main class="channel-grid" id="channelGrid">
+                <!-- 16 channel cards rendered by JS -->
+            </main>
+        </div>
+    </section>
+
+    <!-- ═══ Actions Group ═══ -->
+    <section class="group" id="group-actions">
+        <div class="group-header" data-group="actions">
+            <span class="group-arrow"></span>
+            <h2 class="group-title" data-i18n="group.actions">Actions</h2>
+        </div>
+        <div class="group-body">
+            <div class="group-placeholder" data-i18n="group.placeholder">No actions configured yet.</div>
+        </div>
+    </section>
 
     <!-- ═══ Settings Modal ═══ -->
     <div class="modal-overlay hidden" id="settingsModal">

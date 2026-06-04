@@ -40,6 +40,11 @@ const i18n = {
             'tooltip.disableChannel': 'Disable this channel',
             'tooltip.clickToEdit': 'Click to edit',
 
+            // ── Groups ────────────────────────────────────────────────
+            'group.channels': 'Channels',
+            'group.actions': 'Actions',
+            'group.placeholder': 'No actions configured yet.',
+
             // ── Channel Cards ───────────────────────────────────────
             'channel.label': 'CH {0}',
             'channel.defaultName': 'Channel {0}',
@@ -111,6 +116,11 @@ const i18n = {
             'tooltip.enableChannel': '启用此通道',
             'tooltip.disableChannel': '禁用此通道',
             'tooltip.clickToEdit': '点击编辑',
+
+            // ── Groups ────────────────────────────────────────────────
+            'group.channels': '通道',
+            'group.actions': '动作',
+            'group.placeholder': '暂无动作配置。',
 
             // ── Channel Cards ───────────────────────────────────────
             'channel.label': '通道 {0}',

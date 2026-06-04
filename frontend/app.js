@@ -255,6 +255,46 @@ function makeEditable(displayEl, onCommit) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Group Collapse System
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Initialize group collapse/expand.  Reads saved state from localStorage
+ * and applies it on page load.  Each group's state is stored under
+ * `pca9685-group-<name>` as 'collapsed' or 'expanded'.
+ */
+function initGroups() {
+    document.querySelectorAll('.group').forEach(group => {
+        const groupId = group.id.replace('group-', '');
+        const key = 'pca9685-group-' + groupId;
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (_) { /* noop */ }
+
+        // Apply saved state (default: expanded if not saved yet)
+        if (saved === 'collapsed') {
+            group.classList.add('collapsed');
+        }
+
+        // Toggle on header click
+        const header = group.querySelector('.group-header');
+        if (header) {
+            header.addEventListener('click', () => {
+                const isNowCollapsed = !group.classList.contains('collapsed');
+                if (isNowCollapsed) {
+                    group.classList.add('collapsed');
+                } else {
+                    group.classList.remove('collapsed');
+                }
+                // Persist to localStorage
+                try {
+                    localStorage.setItem(key, isNowCollapsed ? 'collapsed' : 'expanded');
+                } catch (_) { /* noop */ }
+            });
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Render: Status Bar
 // ═══════════════════════════════════════════════════════════════════
 
@@ -734,6 +774,9 @@ async function handleImport(file) {
 document.addEventListener('DOMContentLoaded', () => {
     // ── i18n initialisation ──
     i18n.init();
+
+    // ── Group system ──
+    initGroups();
 
     // Re-render dynamic UI when language changes
     i18n._onChange = () => {

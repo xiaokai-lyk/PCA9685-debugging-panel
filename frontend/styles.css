@@ -183,6 +183,76 @@ html, body {
 }
 .btn-close:hover { color: var(--text); }
 
+/* ── Groups (Collapsible Sections) ─────────────────────────────────── */
+
+.group {
+    margin: 0 auto 24px;
+    max-width: 1400px;
+}
+
+.group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color var(--transition), border-radius var(--transition);
+}
+.group-header:hover {
+    border-color: var(--accent);
+}
+
+.group-arrow {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid var(--text-muted);
+    flex-shrink: 0;
+    transition: transform 200ms ease;
+}
+.group.collapsed .group-arrow {
+    transform: rotate(-90deg);
+}
+
+.group-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.group-body {
+    overflow: hidden;
+    transition: max-height 300ms ease, opacity 200ms ease, padding 200ms ease;
+    max-height: 2000px;
+    opacity: 1;
+}
+.group.collapsed .group-body {
+    max-height: 0;
+    opacity: 0;
+}
+
+.group.collapsed .group-header {
+    border-radius: var(--radius);
+}
+
+.group-placeholder {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    border-top: none;
+    background: var(--bg-card);
+}
+
 /* ── Channel Grid ───────────────────────────────────────────────── */
 
 .channel-grid {
