@@ -4,6 +4,9 @@
  * Manages SSE connection, REST API calls, channel state, and UI rendering.
  */
 
+// Hide the JS-failure overlay — JS is running, so the app is functional.
+document.getElementById('jsFailOverlay').style.display = 'none';
+
 // ═══════════════════════════════════════════════════════════════════
 // State
 // ═══════════════════════════════════════════════════════════════════
