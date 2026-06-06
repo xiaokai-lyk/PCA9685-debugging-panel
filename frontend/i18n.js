@@ -100,6 +100,15 @@ const i18n = {
             'toast.actionRenamed': 'Action renamed',
             'toast.cacheCleared': 'Cache cleared — config reset to defaults',
 
+            // ── ARIA Labels ─────────────────────────────────────────
+            'aria.freqValue': 'PWM Frequency',
+            'aria.minPulse': 'Minimum pulse width',
+            'aria.maxPulse': 'Maximum pulse width',
+            'aria.minAngle': 'Minimum angle',
+            'aria.maxAngle': 'Maximum angle',
+            'aria.actionName': 'Action name',
+            'aria.importFile': 'Import workspace file',
+
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': 'min_angle must be < max_angle',
             'validation.minPulseLtMaxPulse': 'min_pulse must be < max_pulse',
@@ -195,6 +204,15 @@ const i18n = {
             'toast.actionRenamed': '动作已重命名',
             'toast.cacheCleared': '缓存已清除 — 配置已重置为默认值',
 
+            // ── ARIA Labels ─────────────────────────────────────────
+            'aria.freqValue': 'PWM 频率',
+            'aria.minPulse': '最小脉冲宽度',
+            'aria.maxPulse': '最大脉冲宽度',
+            'aria.minAngle': '最小角度',
+            'aria.maxAngle': '最大角度',
+            'aria.actionName': '动作名称',
+            'aria.importFile': '导入工作区文件',
+
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': '最小角度必须小于最大角度',
             'validation.minPulseLtMaxPulse': '最小脉冲必须小于最大脉冲',
@@ -247,6 +265,9 @@ const i18n = {
         });
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             el.placeholder = this.t(el.getAttribute('data-i18n-placeholder'));
+        });
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+            el.setAttribute('aria-label', this.t(el.getAttribute('data-i18n-aria-label')));
         });
     },
 

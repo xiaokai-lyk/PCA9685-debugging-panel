@@ -47,7 +47,9 @@
             </button>
             <button class="btn btn-outline" id="btnExport" data-i18n-title="tooltip.export" data-i18n="btn.export">⬇ Export</button>
             <button class="btn btn-outline" id="btnImport" data-i18n-title="tooltip.import" data-i18n="btn.import">⬆ Import</button>
-            <input type="file" id="importFileInput" accept=".json" hidden>
+            <input type="file" id="importFileInput" accept=".json" hidden
+               aria-label="Import workspace file"
+               data-i18n-aria-label="aria.importFile">
             <button class="btn btn-outline" id="btnSettings" data-i18n="btn.settings">⚙ Settings</button>
         </div>
     </header>
@@ -75,8 +77,9 @@
             <div class="actions-toolbar">
                 <div class="actions-input-row">
                     <input type="text" id="actionNameInput" maxlength="40"
-                           data-i18n-placeholder="actions.namePlaceholder"
-                           placeholder="Action name...">
+                           data-i18n-placeholder="actions.namePlaceholder" placeholder="Action name..."
+                           aria-label="Action name"
+                           data-i18n-aria-label="aria.actionName">
                     <button class="btn btn-primary" id="btnRecordAction"
                             data-i18n="actions.record">▶ Record Current Action</button>
                 </div>
@@ -100,7 +103,9 @@
                     <label for="settingFreq" data-i18n="settings.frequency">PWM Frequency</label>
                     <div class="setting-row">
                         <input type="range" id="settingFreq" min="40" max="400" step="1" value="50">
-                        <input type="number" id="settingFreqNum" min="40" max="400" step="1" value="50">
+                        <input type="number" id="settingFreqNum" min="40" max="400" step="1" value="50"
+                           aria-label="PWM Frequency"
+                           data-i18n-aria-label="aria.freqValue">
                         <span class="unit" data-i18n="settings.hz">Hz</span>
                     </div>
                     <p class="help-text" data-i18n="settings.freqHelp">Default 50 Hz. Range: 40–400 Hz.</p>
@@ -111,10 +116,14 @@
                     <label data-i18n="settings.pulseRange">Default Pulse Width Range</label>
                     <div class="setting-row">
                         <span class="unit" data-i18n="settings.min">Min</span>
-                        <input type="number" id="settingPulseMin" min="100" max="10000" step="10" value="600">
+                        <input type="number" id="settingPulseMin" min="100" max="10000" step="10" value="600"
+                           aria-label="Minimum pulse width"
+                           data-i18n-aria-label="aria.minPulse">
                         <span class="unit" data-i18n="settings.us">µs</span>
                         <span class="unit" data-i18n="settings.max">Max</span>
-                        <input type="number" id="settingPulseMax" min="100" max="10000" step="10" value="2400">
+                        <input type="number" id="settingPulseMax" min="100" max="10000" step="10" value="2400"
+                           aria-label="Maximum pulse width"
+                           data-i18n-aria-label="aria.maxPulse">
                         <span class="unit" data-i18n="settings.us">µs</span>
                     </div>
                     <p class="help-text" data-i18n="settings.pulseHelp">Used for uncalibrated channels.</p>
@@ -138,10 +147,14 @@
                     <label data-i18n="calibrate.angleRange">Angle Range</label>
                     <div class="setting-row">
                         <span class="unit" data-i18n="settings.min">Min</span>
-                        <input type="number" id="calibMinAngle" step="1" value="0">
+                        <input type="number" id="calibMinAngle" step="1" value="0"
+                               aria-label="Minimum angle"
+                               data-i18n-aria-label="aria.minAngle">
                         <span class="unit" data-i18n="calibrate.deg">°</span>
                         <span class="unit" data-i18n="settings.max">Max</span>
-                        <input type="number" id="calibMaxAngle" step="1" value="180">
+                        <input type="number" id="calibMaxAngle" step="1" value="180"
+                               aria-label="Maximum angle"
+                               data-i18n-aria-label="aria.maxAngle">
                         <span class="unit" data-i18n="calibrate.deg">°</span>
                     </div>
                 </div>
@@ -149,10 +162,14 @@
                     <label data-i18n="calibrate.pulseRange">Pulse Width Range</label>
                     <div class="setting-row">
                         <span class="unit" data-i18n="settings.min">Min</span>
-                        <input type="number" id="calibMinPulse" min="100" max="10000" step="10" value="600">
+                        <input type="number" id="calibMinPulse" min="100" max="10000" step="10" value="600"
+                               aria-label="Minimum pulse width"
+                               data-i18n-aria-label="aria.minPulse">
                         <span class="unit" data-i18n="settings.us">µs</span>
                         <span class="unit" data-i18n="settings.max">Max</span>
-                        <input type="number" id="calibMaxPulse" min="100" max="10000" step="10" value="2400">
+                        <input type="number" id="calibMaxPulse" min="100" max="10000" step="10" value="2400"
+                               aria-label="Maximum pulse width"
+                               data-i18n-aria-label="aria.maxPulse">
                         <span class="unit" data-i18n="settings.us">µs</span>
                     </div>
                 </div>
