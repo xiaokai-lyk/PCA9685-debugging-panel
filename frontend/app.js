@@ -675,16 +675,19 @@ function renderActions() {
         infoSpan.className = 'action-info';
         infoSpan.textContent = i18n.t('actions.channelsWithData', chCount);
 
+        // ── Button row ──
+        const btnRow = document.createElement('div');
+        btnRow.className = 'action-buttons';
+
         const playBtn = document.createElement('button');
         playBtn.className = 'btn btn-primary btn-action-play';
         playBtn.textContent = i18n.t('actions.play');
         playBtn.addEventListener('click', () => handlePlayAction(idx));
 
         const renameBtn = document.createElement('button');
-        renameBtn.className = 'btn btn-outline btn-action-delete';
+        renameBtn.className = 'btn btn-outline btn-action-rename';
         renameBtn.textContent = '✎';
         renameBtn.title = i18n.t('actions.renamePrompt');
-        renameBtn.style.cssText = 'padding:4px 8px;font-size:12px;';
         renameBtn.addEventListener('click', () => handleRenameAction(idx));
 
         const deleteBtn = document.createElement('button');
@@ -692,11 +695,13 @@ function renderActions() {
         deleteBtn.textContent = i18n.t('actions.delete');
         deleteBtn.addEventListener('click', () => handleDeleteAction(idx));
 
+        btnRow.appendChild(renameBtn);
+        btnRow.appendChild(playBtn);
+        btnRow.appendChild(deleteBtn);
+
         card.appendChild(nameSpan);
         card.appendChild(infoSpan);
-        card.appendChild(renameBtn);
-        card.appendChild(playBtn);
-        card.appendChild(deleteBtn);
+        card.appendChild(btnRow);
         list.appendChild(card);
     });
 }

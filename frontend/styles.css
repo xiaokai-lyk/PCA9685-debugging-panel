@@ -606,23 +606,40 @@ html, body {
 .actions-input-row input:focus { border-color: var(--accent); }
 .actions-input-row input::placeholder { color: var(--text-muted); }
 
+/* ── Actions Grid ─────────────────────────────────────────────────── */
+
+.actions-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1100px) {
+    .actions-list { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 800px) {
+    .actions-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+    .actions-list { grid-template-columns: 1fr; }
+}
+
 /* ── Action Card ──────────────────────────────────────────────────── */
 
 .action-card {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-input);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
     transition: border-color var(--transition);
 }
 .action-card:hover { border-color: var(--accent); }
-.action-card + .action-card { margin-top: 8px; }
 
 .action-card .action-name {
-    flex: 1;
     font-size: 14px;
     font-weight: 600;
     min-width: 0;
@@ -634,16 +651,27 @@ html, body {
 .action-card .action-info {
     font-size: 11px;
     color: var(--text-muted);
-    flex-shrink: 0;
+}
+
+.action-card .action-buttons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: auto;
 }
 
 .action-card .btn-action-play {
-    padding: 4px 14px;
+    flex: 1;
+    padding: 5px 12px;
     font-size: 12px;
     font-weight: 600;
 }
 .action-card .btn-action-delete {
-    padding: 4px 10px;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+.action-card .btn-action-rename {
+    padding: 5px 8px;
     font-size: 12px;
 }
 
@@ -652,6 +680,7 @@ html, body {
     text-align: center;
     color: var(--text-muted);
     font-size: 13px;
+    grid-column: 1 / -1;
 }
 
 /* ── Toast ────────────────────────────────────────────────────────── */
