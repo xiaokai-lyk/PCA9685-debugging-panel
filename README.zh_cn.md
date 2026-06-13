@@ -33,6 +33,15 @@ pip install pca9685-debugging-panel
 pca9685-panel --host 0.0.0.0 --port 8080
 ```
 
+#### 从 GitHub Releases 下载
+
+每个 [Release](https://github.com/xiaokai-lyk/PCA9685-debugging-panel/releases) 附件中都包含预构建的 `.whl` 文件，可以直接下载安装：
+
+```shell
+pip install pca9685_debugging_panel-0.2.0-py3-none-any.whl
+pca9685-panel --host 0.0.0.0 --port 8080
+```
+
 然后在浏览器打开 `http://<机器人IP>:8080`。
 
 #### 从源码安装

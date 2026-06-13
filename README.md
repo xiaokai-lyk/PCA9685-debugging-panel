@@ -33,6 +33,15 @@ pip install pca9685-debugging-panel
 pca9685-panel --host 0.0.0.0 --port 8080
 ```
 
+#### From GitHub Releases
+
+Each [release](https://github.com/xiaokai-lyk/PCA9685-debugging-panel/releases) includes a pre-built `.whl` file as an attachment. Download it and install directly:
+
+```shell
+pip install pca9685_debugging_panel-0.2.0-py3-none-any.whl
+pca9685-panel --host 0.0.0.0 --port 8080
+```
+
 Then open `http://<robot-ip>:8080` in your browser.
 
 #### From source
