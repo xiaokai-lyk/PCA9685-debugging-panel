@@ -1,6 +1,6 @@
 [project]
 name = "pca9685-debugging-panel"
-version = "0.1.0"
+version = "0.2.0"
 description = "Web-based remote control panel for debugging PCA9685 servo drivers on robots."
 readme = "README.md"
 license = {text = "Apache-2.0"}
