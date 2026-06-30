@@ -9,6 +9,11 @@
 
 [中文文档](README.zh_cn.md)
 
+## Vedio Demonstration
+
+<video src="https://github.com/user-attachments/assets/1ec76faa-98f0-4822-ad41-b33fc77ead6d" ></video>
+
+
 ## Description
 
 A lightweight web panel (similar to FTC Dashboard) that runs on your robot and lets you control PCA9685-driven servos from any browser over Wi‑Fi. Supports per-channel angle control with calibration, live device status monitoring, and workspace save/load — so you can tune and debug servos without touching code.
