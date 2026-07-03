@@ -10,6 +10,7 @@ jobs:
     environment: pypi
     permissions:
       id-token: write  # required for OIDC trusted publishing
+      contents: write  # required to upload release assets
 
     steps:
       - uses: actions/checkout@v7
