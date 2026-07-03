@@ -2,7 +2,7 @@
 
 > 基于 Web 的 PCA9685 舵机驱动远程调试面板，运行在机器人上，通过浏览器控制。
 
-> **⚠️ 安全提示：** 默认启动时**无身份验证**。如果在共享网络中使用，请通过 `--auth-token <token>` 要求写操作（POST/DELETE）携带共享密钥。切勿将面板直接暴露在公网上。
+> **⚠️ 安全提示：** 默认启动时**无身份验证**。如果在共享网络中使用，请通过 `--auth-token <token>` 要求写操作（POST/DELETE）携带共享密钥。Token 通过未加密 HTTP 传输且无防爆破机制 —— 仅在可信网络中使用。切勿将面板暴露在公网上。
 
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)

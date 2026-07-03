@@ -2,7 +2,7 @@
 
 > Web-based remote control panel for debugging PCA9685 servo drivers on robots.
 
-> **⚠️ Security Notice:** By default, this tool starts with **no authentication**. For shared networks, use `--auth-token <token>` to require a shared secret for write operations (POST/DELETE). Never expose the panel directly to the public internet.
+> **⚠️ Security Notice:** By default, this tool starts with **no authentication**. For shared networks, use `--auth-token <token>` to require a shared secret for write operations (POST/DELETE). The token is sent over unencrypted HTTP and has no brute-force protection — use on trusted networks only. Never expose the panel to the public internet.
 
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)
