@@ -44,6 +44,24 @@ def configure_debug(enabled: bool) -> None:
     global _debug_mode
     _debug_mode = enabled
 
+
+# ── Auth token (set by main.py before server starts) ──────────────────
+
+_auth_token: str | None = None
+
+
+def configure_auth(token: str | None) -> None:
+    """Set the shared auth token for write operations.
+
+    If None, no authentication is required — a warning will be printed
+    at startup.  Called from the launcher before the server starts.
+    """
+    global _auth_token
+    _auth_token = token
+    if token is None:
+        print("[warning] No auth token set — write operations are unprotected!")
+        print("[info] Use the --auth-token option to set a shared secret for write operations.")
+        print("[info] Make sure that you trust the network.")
 # ── SSE Manager ───────────────────────────────────────────────────────
 
 class SSEManager:
@@ -192,6 +210,26 @@ if not FRONTEND_DIR.is_dir():
     FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 
 app = FastAPI(title="PCA9685 Debug Panel", lifespan=lifespan)
+
+
+# ── Auth middleware ───────────────────────────────────────────────────
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    """Check auth token for write operations (POST, PUT, PATCH, DELETE).
+
+    Read operations (GET, HEAD, OPTIONS) and SSE are not protected.
+    When _auth_token is None, all requests pass through.
+    """
+    if _auth_token is not None and request.method in ("POST", "DELETE"):
+        header = request.headers.get("Authorization", "")
+        token = header.removeprefix("Bearer ").strip()
+        if token != _auth_token:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Unauthorized — invalid or missing token"},
+            )
+    return await call_next(request)
 
 
 # ── Debug middleware ──────────────────────────────────────────────────

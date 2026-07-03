@@ -12,7 +12,7 @@
     <!-- ═══ JS-Failure Overlay (hidden by app.js on successful load) ═══ -->
     <div id="jsFailOverlay">
         <div class="js-fail-card">
-            <div class="js-fail-icon">⚠</div>
+            <div class="js-fail-icon">⚠️</div>
             <h1>JavaScript Is Not Running</h1>
             <h1>JavaScript 没有工作</h1>
             <hr>
@@ -50,6 +50,7 @@
             <input type="file" id="importFileInput" accept=".json" hidden
                aria-label="Import workspace file"
                data-i18n-aria-label="aria.importFile">
+            <button class="btn btn-outline" id="btnLock" data-i18n-title="auth.logoutTitle" title="Forget token and lock the panel" style="display:none">Lock</button>
             <button class="btn btn-outline" id="btnSettings" data-i18n="btn.settings">⚙ Settings</button>
         </div>
     </header>
@@ -81,7 +82,7 @@
                            aria-label="Action name"
                            data-i18n-aria-label="aria.actionName">
                     <button class="btn btn-primary" id="btnRecordAction"
-                            data-i18n="actions.record">▶ Record Current Action</button>
+                            data-i18n="actions.record">▶️ Record Current Action</button>
                 </div>
                 <div class="actions-list" id="actionsList">
                     <!-- Rendered by JS -->
@@ -131,6 +132,25 @@
 
                 <button class="btn btn-primary" id="btnApplySettings" data-i18n="btn.apply">Apply</button>
                 <button class="btn btn-danger" id="btnClearCache" data-i18n="settings.clearCache">Clear Cache</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Auth Overlay ═══ -->
+    <div class="modal-overlay hidden" id="authOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="authOverlayTitle" data-i18n="auth.title">Authentication Required</h2>
+            </div>
+            <div class="modal-body">
+                <p class="auth-description" data-i18n="auth.description">Enter the shared token to control the hardware.</p>
+                <input type="password" id="authTokenInput"
+                       class="auth-token-input"
+                       data-i18n-placeholder="auth.placeholder" placeholder="Token..."
+                       aria-label="Auth token"
+                       data-i18n-aria-label="auth.placeholder">
+                <p class="auth-error hidden" id="authError" data-i18n="auth.wrongToken">Invalid token — please try again</p>
+                <button class="btn btn-primary" id="btnUnlock" data-i18n="auth.unlock">Unlock</button>
             </div>
         </div>
     </div>

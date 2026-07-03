@@ -2,7 +2,7 @@
 
 > 基于 Web 的 PCA9685 舵机驱动远程调试面板，运行在机器人上，通过浏览器控制。
 
-> **⚠️ 安全提示：** 本工具会启动一个**无身份验证**的 Web 服务，请仅在可信的局域网（如机器人自带的 Wi‑Fi）中使用，**不要**暴露在公网上。
+> **⚠️ 安全提示：** 默认启动时**无身份验证**。如果在共享网络中使用，请通过 `--auth-token <token>` 要求写操作（POST/DELETE）携带共享密钥。切勿将面板直接暴露在公网上。
 
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)
@@ -63,6 +63,16 @@ python main.py
 pca9685-panel --mock
 ```
 
+### 保护写操作
+
+使用 `--auth-token` 参数为所有写操作（POST/DELETE）添加共享密钥保护：
+
+```shell
+pca9685-panel --auth-token my-secret-token
+```
+
+浏览器会显示登录遮罩层，输入相同的 token 即可解锁面板。读操作（状态查询、通道轮询、SSE 事件）保持公开，方便你无需认证即可监控设备状态。
+
 ## 开发
 
 ### 项目结构
@@ -95,8 +105,16 @@ PCA9685-debugging-panel/
 | `POST` | `/api/servo/calibrate`     | 设置角度↔脉宽校准                                                   |
 | `POST` | `/api/pca9685/frequency`   | 设置 PWM 频率 `{frequency_hz}`                                     |
 | `POST` | `/api/pca9685/pulse_range` | 设置默认脉宽范围                                                     |
+| `POST` | `/api/output/global`       | 总开关：启用/禁用所有通道 `{enabled}`                              |
+| `POST` | `/api/output/channel`      | 启用/禁用单个通道 `{channel, enabled}`                            |
 | `GET`  | `/api/workspace/export`    | 导出完整配置为 JSON 文件                                             |
 | `POST` | `/api/workspace/import`    | 上传并应用 workspace JSON                                            |
+| `POST` | `/api/config/clear`        | 重置所有配置为出厂默认值                                             |
+| `GET`  | `/api/actions`             | 列出所有已保存的动作                                                 |
+| `POST` | `/api/actions/record`      | 保存当前通道位置为命名动作 `{name}`                                |
+| `POST` | `/api/actions/{index}/play`  | 回放已保存的动作（恢复所有通道位置）                               |
+| `DELETE` | `/api/actions/{index}`   | 删除已保存的动作                                                     |
+| `POST` | `/api/actions/{index}/rename` | 重命名已保存的动作 `{name}`                                  |
 | `GET`  | `/api/events`              | SSE 流，推送设备状态变化                                             |
 
 访问 `http://<host>:8080/docs` 查看交互式 API 文档（Swagger UI）。

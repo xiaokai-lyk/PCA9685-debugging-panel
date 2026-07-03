@@ -2,7 +2,7 @@
 
 > Web-based remote control panel for debugging PCA9685 servo drivers on robots.
 
-> **⚠️ Security Notice:** This tool exposes a web server with **no authentication**. Only run it on a trusted local network (e.g., your robot's Wi‑Fi). Do **not** expose it to the public internet.
+> **⚠️ Security Notice:** By default, this tool starts with **no authentication**. For shared networks, use `--auth-token <token>` to require a shared secret for write operations (POST/DELETE). Never expose the panel directly to the public internet.
 
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.136%2B-009688)](https://fastapi.tiangolo.com)
@@ -68,6 +68,16 @@ Use the `--mock` flag to skip hardware initialisation entirely — all APIs work
 pca9685-panel --mock
 ```
 
+### Protecting write operations
+
+To require a shared secret token for all write operations (POST/DELETE), use the `--auth-token` flag:
+
+```shell
+pca9685-panel --auth-token my-secret-token
+```
+
+The browser will show a login overlay; enter the same token to unlock the panel. Read operations (status, channel polling, SSE events) remain public so you can still monitor the device without authentication.
+
 ## Developing
 
 ### Project structure
@@ -100,8 +110,16 @@ PCA9685-debugging-panel/
 | `POST` | `/api/servo/calibrate`     | Set angle ↔ pulse calibration                                 |
 | `POST` | `/api/pca9685/frequency`   | Set PWM frequency `{frequency_hz}`                           |
 | `POST` | `/api/pca9685/pulse_range` | Set default pulse range                                        |
+| `POST` | `/api/output/global`       | Master switch: enable/disable all channels `{enabled}`       |
+| `POST` | `/api/output/channel`      | Enable/disable a single channel `{channel, enabled}`         |
 | `GET`  | `/api/workspace/export`    | Download full configuration as JSON                            |
 | `POST` | `/api/workspace/import`    | Upload & apply a workspace JSON                                |
+| `POST` | `/api/config/clear`        | Reset all config to factory defaults                           |
+| `GET`  | `/api/actions`             | List all saved action records                                  |
+| `POST` | `/api/actions/record`      | Save current positions as a named action `{name}`            |
+| `POST` | `/api/actions/{index}/play`  | Replay a saved action (restore all channel positions)       |
+| `DELETE` | `/api/actions/{index}`   | Delete a saved action                                          |
+| `POST` | `/api/actions/{index}/rename` | Rename a saved action `{name}`                          |
 | `GET`  | `/api/events`              | SSE stream for device status pushes                            |
 
 Interactive docs available at `http://<host>:8080/docs` (Swagger UI).

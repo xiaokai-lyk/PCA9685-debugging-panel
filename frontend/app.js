@@ -8,6 +8,26 @@
 document.getElementById('jsFailOverlay').style.display = 'none';
 
 // ═══════════════════════════════════════════════════════════════════
+// Auth Token (localStorage-backed, shared secret for write operations)
+// ═══════════════════════════════════════════════════════════════════
+
+let authToken = null;
+
+function loadAuthToken() {
+    try { authToken = localStorage.getItem('pca9685-auth-token'); } catch (_) { authToken = null; }
+}
+
+function saveAuthToken(token) {
+    authToken = token;
+    try { localStorage.setItem('pca9685-auth-token', token); } catch (_) { /* noop */ }
+}
+
+function clearAuthToken() {
+    authToken = null;
+    try { localStorage.removeItem('pca9685-auth-token'); } catch (_) { /* noop */ }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // State
 // ═══════════════════════════════════════════════════════════════════
 
@@ -47,10 +67,23 @@ function defaultChannel(i) {
 // ═══════════════════════════════════════════════════════════════════
 
 async function api(path, options = {}) {
-    const res = await fetch(path, {
-        headers: { 'Content-Type': 'application/json', ...options.headers },
-        ...options,
-    });
+    const headers = { 'Content-Type': 'application/json', ...options.headers };
+
+    // Attach auth token for write operations
+    const method = (options.method || 'GET').toUpperCase();
+    if (method !== 'GET' && authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const res = await fetch(path, { headers, ...options });
+
+    if (res.status === 401) {
+        clearAuthToken();
+        showAuthOverlay();
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || i18n.t('auth.wrongToken'));
+    }
+
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.detail || `HTTP ${res.status}`);
@@ -239,6 +272,55 @@ function toast(msg, className = '') {
             el.remove();
         }
     });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Auth Overlay
+// ═══════════════════════════════════════════════════════════════════
+
+function showAuthOverlay() {
+    const overlay = document.getElementById('authOverlay');
+    const input = document.getElementById('authTokenInput');
+    const error = document.getElementById('authError');
+    overlay.classList.remove('hidden');
+    error.classList.add('hidden');
+    input.value = '';
+    input.focus();
+    // Hide lock button while overlay is visible
+    const lockBtn = document.getElementById('btnLock');
+    lockBtn.style.display = 'none';
+}
+
+function hideAuthOverlay() {
+    document.getElementById('authOverlay').classList.add('hidden');
+}
+
+function handleUnlock() {
+    const input = document.getElementById('authTokenInput');
+    const error = document.getElementById('authError');
+    const token = input.value.trim();
+
+    if (!token) {
+        error.classList.remove('hidden');
+        input.focus();
+        return;
+    }
+
+    saveAuthToken(token);
+    error.classList.add('hidden');
+    hideAuthOverlay();
+
+    // Show lock button
+    const lockBtn = document.getElementById('btnLock');
+    lockBtn.style.display = '';
+    lockBtn.textContent = i18n.t('auth.logout');
+
+    // Refresh all data with the new token
+    fetchStatus().catch(() => {});
+    fetchChannels().catch(() => {});
+    fetchActions().catch(() => {});
+
+    toast(i18n.t('auth.unlock'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -686,7 +768,7 @@ function renderActions() {
 
         const renameBtn = document.createElement('button');
         renameBtn.className = 'btn btn-outline btn-action-rename';
-        renameBtn.textContent = '✎';
+        renameBtn.textContent = '✏️';
         renameBtn.title = i18n.t('actions.renamePrompt');
         renameBtn.addEventListener('click', () => handleRenameAction(idx));
 
@@ -962,11 +1044,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!document.getElementById('calibrateModal').classList.contains('hidden')) {
             document.getElementById('calibModalTitle').textContent = i18n.t('calibrate.title', calibChannel);
         }
+        // Update lock button
+        const lockBtn = document.getElementById('btnLock');
+        if (lockBtn && authToken) {
+            lockBtn.textContent = i18n.t('auth.logout');
+        }
     };
 
     // Language selector
     document.getElementById('langSelect').addEventListener('change', (e) => {
         i18n.setLocale(e.target.value);
+    });
+
+    // ── Auth bindings ──
+    document.getElementById('btnUnlock').addEventListener('click', handleUnlock);
+    document.getElementById('authTokenInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleUnlock();
+    });
+    document.getElementById('btnLock').addEventListener('click', () => {
+        clearAuthToken();
+        showAuthOverlay();
     });
 
     // ── Button bindings ──
@@ -1030,6 +1127,19 @@ document.addEventListener('DOMContentLoaded', () => {
             closeCalibrateModal();
         }
     });
+
+    // ── Auth init ──
+    loadAuthToken();
+    const lockBtn = document.getElementById('btnLock');
+    if (authToken) {
+        // Token exists — show lock button, hide overlay
+        lockBtn.style.display = '';
+        lockBtn.textContent = '🔒 ' + i18n.t('auth.logout');
+    } else {
+        // No token — show auth overlay, hide lock button
+        lockBtn.style.display = 'none';
+        showAuthOverlay();
+    }
 
     // ── Initial data load ──
     fetchStatus().catch(() => {});

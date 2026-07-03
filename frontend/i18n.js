@@ -109,6 +109,15 @@ const i18n = {
             'aria.actionName': 'Action name',
             'aria.importFile': 'Import workspace file',
 
+            // ── Auth ───────────────────────────────────────────────
+            'auth.title': 'Authentication Required',
+            'auth.description': 'Enter the shared token to control the hardware.',
+            'auth.placeholder': 'Token...',
+            'auth.unlock': 'Unlock',
+            'auth.wrongToken': 'Invalid token — please try again',
+            'auth.logout': 'Lock',
+            'auth.logoutTitle': 'Forget token and lock the panel',
+
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': 'min_angle must be < max_angle',
             'validation.minPulseLtMaxPulse': 'min_pulse must be < max_pulse',
@@ -212,6 +221,15 @@ const i18n = {
             'aria.maxAngle': '最大角度',
             'aria.actionName': '动作名称',
             'aria.importFile': '导入工作区文件',
+
+            // ── Auth ───────────────────────────────────────────────
+            'auth.title': '需要身份验证',
+            'auth.description': '请输入共享令牌以控制硬件。',
+            'auth.placeholder': '令牌...',
+            'auth.unlock': '解锁',
+            'auth.wrongToken': '令牌无效 — 请重试',
+            'auth.logout': '锁定',
+            'auth.logoutTitle': '忘记令牌并锁定面板',
 
             // ── Validation ─────────────────────────────────────────
             'validation.minAngleLtMaxAngle': '最小角度必须小于最大角度',

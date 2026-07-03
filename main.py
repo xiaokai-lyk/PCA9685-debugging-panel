@@ -28,8 +28,8 @@ def main():
         help="Enable debug mode (detailed error messages, request logging, tracebacks in responses)",
     )
     parser.add_argument(
-        "--host", default="0.0.0.0",
-        help="Host to bind to (default: 0.0.0.0)",
+        "--host", default="127.0.0.1",
+        help="Host to bind to (default: 127.0.0.1)",
     )
     parser.add_argument(
         "--port", type=int, default=8080,
@@ -39,12 +39,18 @@ def main():
         "--reload", action="store_true", default=False,
         help="Enable uvicorn auto-reload (dev only)",
     )
+    parser.add_argument(
+        "--auth-token", default=None,
+        help="Shared token for write operations (POST/DELETE). "
+             "If not set, no authentication is required (unsafe).",
+    )
     args = parser.parse_args()
 
     configure_mock(enabled=args.mock)
 
-    from backend.app import configure_debug
+    from backend.app import configure_debug, configure_auth
     configure_debug(enabled=args.debug)
+    configure_auth(token=args.auth_token)
 
     import uvicorn
     uvicorn.run(
